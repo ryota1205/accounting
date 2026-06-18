@@ -5,6 +5,9 @@ import DealForm from "./pages/DealForm";
 import AnnualMatrix from "./pages/AnnualMatrix";
 import SummaryBy from "./pages/SummaryBy";
 import ProfitLoss from "./pages/ProfitLoss";
+import Payments from "./pages/Payments";
+import Masters from "./pages/Masters";
+import ImportExport from "./pages/ImportExport";
 
 export default function App() {
   return (
@@ -17,6 +20,9 @@ export default function App() {
       <Route path="/annual" element={<AnnualMatrix />} />
       <Route path="/summary" element={<SummaryBy />} />
       <Route path="/pl" element={<ProfitLoss />} />
+      <Route path="/payments" element={<Payments />} />
+      <Route path="/masters" element={<Masters />} />
+      <Route path="/io" element={<ImportExport />} />
     </Routes>
   );
 }
