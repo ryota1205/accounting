@@ -5,6 +5,9 @@ import openpyxl
 from app.schemas import DealIn
 
 SHEET_NAME = "①案件日付別管理"
+# 取込元シートの優先順位。年度ファイルによりデータの入っているシートが異なるため、
+# 先頭から順に試し、最初にデータが取れたシートを採用する。
+SHEET_CANDIDATES = ["①案件日付別管理", "案件入力"]
 
 
 def _to_date(v) -> Optional[date]:
@@ -37,7 +40,21 @@ def _to_str(v) -> Optional[str]:
 
 
 def parse_deals_sheet(wb) -> list[DealIn]:
-    ws = wb[SHEET_NAME] if SHEET_NAME in wb.sheetnames else wb.active
+    """ワークブックから案件を取り込む。
+
+    年度ファイルにより案件データの入っているシートが異なる
+    （「①案件日付別管理」または「案件入力」）。候補シートを順に試し、
+    最初にデータが取れたシートを採用する。どれも空なら先頭シートを使う。
+    """
+    for name in SHEET_CANDIDATES:
+        if name in wb.sheetnames:
+            deals = _parse_ws(wb[name])
+            if deals:
+                return deals
+    return _parse_ws(wb.active)
+
+
+def _parse_ws(ws) -> list[DealIn]:
     deals: list[DealIn] = []
     for row in ws.iter_rows(min_row=2, values_only=True):
         revenue_month = _to_date(row[0])

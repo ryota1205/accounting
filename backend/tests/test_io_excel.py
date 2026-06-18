@@ -18,6 +18,27 @@ def _make_workbook():
     return wb
 
 
+def test_parse_falls_back_to_anken_nyuryoku_when_hizukebetsu_empty():
+    # 「①案件日付別管理」が空で「案件入力」にデータがある年度ファイルに対応する
+    wb = openpyxl.Workbook()
+    empty = wb.active
+    empty.title = "①案件日付別管理"
+    empty.append(["売上月", "実施日", "代理店", "企業名", "研修名", "講師",
+                  "研修費用", "交通費", "その他", "消費税", "請求額", "講師料",
+                  "入金予定日", "サポートスタッフ"])
+    src = wb.create_sheet("案件入力")
+    src.append(["売上月", "実施日", "代理店", "企業名", "研修名", "講師",
+                "研修費用", "交通費", "その他", "消費税", "請求額", "講師料",
+                "入金予定日", "サポートスタッフ"])
+    src.append([date(2025, 5, 31), date(2025, 5, 23), None, "中小企業大学校", "レジリエンス",
+                "高橋", 36000, None, None, 3600, 39600, None, None, None])
+    deals = parse_deals_sheet(wb)
+    assert len(deals) == 1
+    assert deals[0].client == "中小企業大学校"
+    assert deals[0].fee == 36000
+    assert deals[0].held_on == date(2025, 5, 23)
+
+
 def test_parse_deals_sheet_maps_rows():
     wb = _make_workbook()
     deals = parse_deals_sheet(wb)
