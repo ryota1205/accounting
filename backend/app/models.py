@@ -83,3 +83,12 @@ class MonthlyFixedCost(SQLModel, table=True):
     fixed_cost_amount: int = 0
     memo: Optional[str] = None
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class SalesActivity(SQLModel, table=True):
+    """営業活動の月次手入力（案件にならない問い合わせ・初回相談を補う）。"""
+    month: str = Field(primary_key=True)   # "YYYY-MM"
+    inquiries: int = 0          # 問い合わせ数（手入力）
+    first_meetings: int = 0     # 初回相談数（手入力）
+    memo: Optional[str] = None
+    updated_at: datetime = Field(default_factory=datetime.utcnow)

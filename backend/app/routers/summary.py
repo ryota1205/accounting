@@ -3,12 +3,13 @@ from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session, select
 
 from app.db import get_session
-from app.models import Deal, Setting, MonthlyFixedCost, ConfidenceRate
+from app.models import Deal, Setting, MonthlyFixedCost, ConfidenceRate, SalesActivity
 from app import calc
 
 router = APIRouter(prefix="/api/summary", tags=["summary"])
 
 ORDER_STATUSES = {"受注", "実施済", "請求済", "入金済"}
+PROPOSAL_STATUSES = ORDER_STATUSES | {"提案中", "失注"}
 
 MONTH_LABELS = ["4月", "5月", "6月", "7月", "8月", "9月",
                 "10月", "11月", "12月", "1月", "2月", "3月"]
@@ -207,6 +208,55 @@ def _month_metrics(session: Session, year: int, month: int, rates: dict) -> dict
         "expected_sales": expected,
         "weighted_forecast": weighted,
         "deal_count": len(deals),
+    }
+
+
+def _funnel_metrics(session: Session, year: int, month: int) -> dict:
+    start = date(year, month, 1)
+    end = calc.month_end(start)
+    deals = session.exec(
+        select(Deal).where(Deal.revenue_month >= start, Deal.revenue_month <= end)
+    ).all()
+    auto_inq = sum(1 for d in deals if d.project_status == "問い合わせ")
+    auto_first = sum(1 for d in deals if d.project_status == "初回相談")
+    proposals = sum(1 for d in deals if d.project_status in PROPOSAL_STATUSES)
+    orders = sum(1 for d in deals if d.project_status in ORDER_STATUSES)
+    lost = sum(1 for d in deals if d.project_status == "失注")
+    act = session.get(SalesActivity, f"{year:04d}-{month:02d}")
+    inquiries = (act.inquiries if act else 0) + auto_inq
+    first_meetings = (act.first_meetings if act else 0) + auto_first
+    lost_reasons: dict[str, int] = {}
+    for d in deals:
+        if d.project_status == "失注":
+            key = d.lost_reason or "(未設定)"
+            lost_reasons[key] = lost_reasons.get(key, 0) + 1
+    return {
+        "inquiries": inquiries,
+        "first_meetings": first_meetings,
+        "proposals": proposals,
+        "orders": orders,
+        "lost": lost,
+        "win_rate": (orders / proposals) if proposals else 0.0,
+        "lost_reasons": [{"reason": k, "count": v}
+                         for k, v in sorted(lost_reasons.items(), key=lambda x: x[1], reverse=True)],
+        "total_deals": len(deals),
+    }
+
+
+@router.get("/sales")
+def sales_funnel(ym: str, session: Session = Depends(get_session)):
+    try:
+        year, month = int(ym[:4]), int(ym[5:7])
+    except (ValueError, IndexError):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422, detail="ym は YYYY-MM 形式で指定してください")
+    cur = _funnel_metrics(session, year, month)
+    prev = _funnel_metrics(session, year - 1, month)
+    return {
+        "ym": f"{year:04d}-{month:02d}",
+        "current": cur,
+        "prev_year": prev,
+        "prev_year_has_data": prev["total_deals"] > 0,
     }
 
 

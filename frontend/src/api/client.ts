@@ -1,7 +1,7 @@
 import {
   Deal, DealInput, Master, MasterKind,
   MonthlySummary, AnnualSummary, ByRow, PLSummary, Setting, ConfidenceRate,
-  MonthSummary, MonthlyFixedCost,
+  MonthSummary, MonthlyFixedCost, SalesFunnel, SalesActivity,
 } from "./types";
 
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
@@ -86,6 +86,12 @@ export const api = {
   putMonthlyFixedCost: (ym: string, fixed_cost_amount: number, memo?: string | null) =>
     req<MonthlyFixedCost>(`/api/settings/monthly-fixed-cost/${ym}`,
       { method: "PUT", body: JSON.stringify({ fixed_cost_amount, memo }) }),
+
+  salesFunnel: (ym: string) => req<SalesFunnel>(`/api/summary/sales${qs({ ym })}`),
+  getSalesActivity: (ym: string) => req<SalesActivity>(`/api/sales-activity/${ym}`),
+  putSalesActivity: (ym: string, inquiries: number, first_meetings: number, memo?: string | null) =>
+    req<SalesActivity>(`/api/sales-activity/${ym}`,
+      { method: "PUT", body: JSON.stringify({ inquiries, first_meetings, memo }) }),
 
   exportUrl: (fy: number) => `/api/export/excel?fiscal_year=${fy}`,
   importExcel: async (file: File, wipe: boolean) => {

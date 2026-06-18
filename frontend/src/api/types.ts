@@ -96,6 +96,25 @@ export interface MonthSummary {
 }
 export interface MonthlyFixedCost { month: string; fixed_cost_amount: number; memo: string | null; }
 
+export interface LostReason { reason: string; count: number; }
+export interface FunnelMetrics {
+  inquiries: number;
+  first_meetings: number;
+  proposals: number;
+  orders: number;
+  lost: number;
+  win_rate: number;
+  lost_reasons: LostReason[];
+  total_deals: number;
+}
+export interface SalesFunnel {
+  ym: string;
+  current: FunnelMetrics;
+  prev_year: FunnelMetrics;
+  prev_year_has_data: boolean;
+}
+export interface SalesActivity { month: string; inquiries: number; first_meetings: number; memo: string | null; }
+
 export interface Master { id: number; name: string; active: boolean; agency?: string | null; }
 export type MasterKind = "clients" | "instructors" | "agencies";
 

@@ -51,6 +51,12 @@ class MonthlyFixedCostIn(SQLModel):
     memo: Optional[str] = None
 
 
+class SalesActivityIn(SQLModel):
+    inquiries: int = 0
+    first_meetings: int = 0
+    memo: Optional[str] = None
+
+
 class SettingIn(SQLModel):
     monthly_fixed_cost: int = 0
 

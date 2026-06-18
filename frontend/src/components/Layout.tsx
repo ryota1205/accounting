@@ -9,6 +9,7 @@ const MENU = [
   { to: "/annual", label: "年間売上管理表" },
   { to: "/summary", label: "軸別集計" },
   { to: "/pl", label: "損益・損益分岐点" },
+  { to: "/sales", label: "営業管理" },
   { to: "/payments", label: "入金管理" },
   { to: "/masters", label: "マスタ管理" },
   { to: "/io", label: "Excel連携" },
