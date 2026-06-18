@@ -85,6 +85,11 @@ def _net(d: Deal) -> int:
     return d.fee + d.transport + d.other
 
 
+def _cost(d: Deal) -> int:
+    """直接原価。未設定なら従来の講師料を用いる（既存BEPと後方互換）。"""
+    return d.direct_cost if d.direct_cost is not None else d.instructor_fee
+
+
 @router.get("/pl")
 def profit_loss(fiscal_year: int, session: Session = Depends(get_session)):
     deals = _deals_in_fy(session, fiscal_year)
@@ -93,14 +98,14 @@ def profit_loss(fiscal_year: int, session: Session = Depends(get_session)):
     annual_fixed = monthly_fixed * 12
 
     net_sales = sum(_net(d) for d in deals)
-    variable = sum(d.instructor_fee for d in deals)
+    variable = sum(_cost(d) for d in deals)
     metrics = calc.pl_metrics(net_sales, variable, annual_fixed)
 
     monthly_net = calc.monthly_buckets(
         fiscal_year, [(d.revenue_month.year, d.revenue_month.month, _net(d)) for d in deals]
     )
     monthly_var = calc.monthly_buckets(
-        fiscal_year, [(d.revenue_month.year, d.revenue_month.month, d.instructor_fee) for d in deals]
+        fiscal_year, [(d.revenue_month.year, d.revenue_month.month, _cost(d)) for d in deals]
     )
     gross_margin_rate = [
         ((monthly_net[i] - monthly_var[i]) / monthly_net[i]) if monthly_net[i] else 0.0

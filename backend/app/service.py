@@ -37,6 +37,18 @@ def build_deal(data: DealIn, deal: Optional[Deal] = None) -> Deal:
         updated_at=datetime.utcnow(),
         support_staff=data.support_staff,
         note=data.note,
+        project_name=data.project_name,
+        training_theme=data.training_theme,
+        direct_cost=data.direct_cost,
+        allocated_fixed_cost=data.allocated_fixed_cost,
+        expected_sales_amount=data.expected_sales_amount,
+        confidence_rank=data.confidence_rank,
+        project_status=data.project_status,
+        customer_type=data.customer_type,
+        lost_reason=data.lost_reason,
+        invoice_date=data.invoice_date,
+        invoice_amount=data.invoice_amount,
+        paid_amount=data.paid_amount,
     )
     if deal is None:
         return Deal(**values)

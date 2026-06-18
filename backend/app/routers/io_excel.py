@@ -27,6 +27,9 @@ async def import_excel(file: UploadFile = File(...), wipe: bool = False,
     imported = 0
     for data in deals_in:
         deal = build_deal(data)
+        # 取り込み案件は実績（請求済）として扱う
+        deal.payment_status = "invoiced"
+        deal.project_status = "実施済"
         session.add(deal)
         register_masters(session, client=data.client,
                          instructor=data.instructor, agency=data.agency)

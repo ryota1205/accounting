@@ -95,6 +95,25 @@ def test_create_deal_rejects_invalid_payment_status(client):
     assert res.status_code == 422
 
 
+def test_create_deal_stores_extended_fields(client):
+    res = client.post("/api/deals", json=_sample_payload(
+        project_name="管理職研修2026", training_theme="リーダーシップ",
+        direct_cost=120000, allocated_fixed_cost=50000,
+        expected_sales_amount=600000, confidence_rank="A",
+        project_status="提案中", customer_type="新規",
+        payment_status="invoiced", invoice_amount=495000, paid_amount=0,
+    ))
+    assert res.status_code == 201
+    b = res.json()
+    assert b["project_name"] == "管理職研修2026"
+    assert b["training_theme"] == "リーダーシップ"
+    assert b["direct_cost"] == 120000
+    assert b["confidence_rank"] == "A"
+    assert b["project_status"] == "提案中"
+    assert b["customer_type"] == "新規"
+    assert b["payment_status"] == "invoiced"
+
+
 def test_get_deal_not_found(client):
     assert client.get("/api/deals/99999").status_code == 404
 

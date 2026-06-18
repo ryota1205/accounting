@@ -17,14 +17,33 @@ class DealIn(SQLModel):
     billing: Optional[int] = None  # 未指定なら fee+transport+other+tax
     instructor_fee: int = 0
     payment_due: Optional[date] = None
-    payment_status: Literal["unpaid", "paid"] = "unpaid"
+    payment_status: Literal[
+        "uninvoiced", "invoiced", "scheduled", "partial", "paid", "overdue"
+    ] = "uninvoiced"
     paid_on: Optional[date] = None
     support_staff: Optional[str] = None
     note: Optional[str] = None
+    # --- 拡張: 案件管理 ---
+    project_name: Optional[str] = None
+    training_theme: Optional[str] = None
+    direct_cost: Optional[int] = None
+    allocated_fixed_cost: int = 0
+    expected_sales_amount: int = 0
+    confidence_rank: Optional[Literal["A", "B", "C"]] = None
+    project_status: str = "受注"
+    customer_type: Optional[Literal["新規", "既存", "リピート"]] = None
+    lost_reason: Optional[str] = None
+    invoice_date: Optional[date] = None
+    invoice_amount: Optional[int] = None
+    paid_amount: int = 0
 
 
 class PayIn(SQLModel):
     paid_on: Optional[date] = None  # 未指定なら当日
+
+
+class ConfidenceRateIn(SQLModel):
+    rate: float = 0.0
 
 
 class SettingIn(SQLModel):

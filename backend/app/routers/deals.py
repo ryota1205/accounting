@@ -103,6 +103,8 @@ def mark_paid(deal_id: int, data: PayIn, session: Session = Depends(get_session)
         raise HTTPException(status_code=404, detail="案件が見つかりません")
     deal.payment_status = "paid"
     deal.paid_on = data.paid_on or date_cls.today()
+    # 入金額を請求額にそろえる（全額入金扱い）
+    deal.paid_amount = deal.invoice_amount if deal.invoice_amount is not None else deal.billing
     session.add(deal)
     session.commit()
     session.refresh(deal)

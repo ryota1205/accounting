@@ -26,7 +26,7 @@ def health():
     return {"status": "ok"}
 
 
-from app.routers import deals, masters, settings, summary, payments, io_excel
+from app.routers import deals, masters, settings, summary, payments, io_excel, confidence
 
 app.include_router(deals.router)
 app.include_router(masters.router)
@@ -34,3 +34,4 @@ app.include_router(settings.router)
 app.include_router(summary.router)
 app.include_router(payments.router)
 app.include_router(io_excel.router)
+app.include_router(confidence.router)

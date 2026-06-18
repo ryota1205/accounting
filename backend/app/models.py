@@ -19,10 +19,25 @@ class Deal(SQLModel, table=True):
     billing: int = 0
     instructor_fee: int = 0
     payment_due: Optional[date] = None
-    payment_status: str = Field(default="unpaid")  # "unpaid" | "paid"
+    # 入金ステータス: uninvoiced(未請求)/invoiced(請求済)/scheduled(入金予定)/
+    #                 partial(一部入金)/paid(入金済)/overdue(遅延)
+    payment_status: str = Field(default="uninvoiced")
     paid_on: Optional[date] = None
     support_staff: Optional[str] = None
     note: Optional[str] = None
+    # --- 拡張: 案件管理（すべて任意・自動マイグレーション） ---
+    project_name: Optional[str] = None          # 案件名
+    training_theme: Optional[str] = None        # 研修テーマ
+    direct_cost: Optional[int] = None           # 直接原価（未設定時は instructor_fee を使用）
+    allocated_fixed_cost: int = 0               # 固定費配賦額（任意）
+    expected_sales_amount: int = 0              # 見込み売上
+    confidence_rank: Optional[str] = None       # 受注確度 A/B/C
+    project_status: str = Field(default="受注")  # 案件ステータス（8区分）
+    customer_type: Optional[str] = None         # 新規/既存/リピート
+    lost_reason: Optional[str] = None           # 失注理由
+    invoice_date: Optional[date] = None         # 請求日
+    invoice_amount: Optional[int] = None        # 請求金額（未設定時は billing を使用）
+    paid_amount: int = 0                        # 入金済金額（一部入金対応）
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -52,4 +67,11 @@ class Agency(SQLModel, table=True):
 class Setting(SQLModel, table=True):
     fiscal_year: int = Field(primary_key=True)
     monthly_fixed_cost: int = 0
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ConfidenceRate(SQLModel, table=True):
+    """受注確度の掛け率（編集可）。A=0.8 / B=0.5 / C=0.2 を初期値とする。"""
+    rank: str = Field(primary_key=True)   # "A" | "B" | "C"
+    rate: float = 0.0
     updated_at: datetime = Field(default_factory=datetime.utcnow)
