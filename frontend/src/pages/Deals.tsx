@@ -47,7 +47,10 @@ export default function Deals() {
       style={{ textAlign: align, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}
       onClick={() => toggleSort(key)}
     >
-      {label}{sort?.key === key ? (sort.dir === "asc" ? " ▲" : " ▼") : " ⇅"}
+      {label}
+      <span style={{ fontSize: 9, opacity: 0.55, marginLeft: 3 }}>
+        {sort?.key === key ? (sort.dir === "asc" ? "▲" : "▼") : "⇅"}
+      </span>
     </th>
   );
 
