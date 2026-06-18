@@ -55,7 +55,7 @@ def pl_metrics(net_sales: int, variable: int, annual_fixed: int) -> dict:
     """損益分岐点まわりの指標を計算する。"""
     contribution_margin = net_sales - variable
     cm_ratio = (contribution_margin / net_sales) if net_sales else 0.0
-    bep = round(annual_fixed / cm_ratio) if cm_ratio else 0
+    bep = round(annual_fixed / cm_ratio) if cm_ratio > 0 else 0
     operating_profit = net_sales - variable - annual_fixed
     safety_margin_ratio = ((net_sales - bep) / net_sales) if net_sales else 0.0
     bep_achievement = (net_sales / bep) if bep else 0.0

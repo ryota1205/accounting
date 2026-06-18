@@ -99,6 +99,10 @@ def test_summary_pl_full(client):
     assert abs(b["gross_margin_rate"][0] - 0.8) < 1e-9
     assert b["cum_net"][0] == 10000000
     assert b["cum_total_cost"][0] == 3000000
+    assert b["cum_total_cost"][1] == 6000000  # (200万+100万)×2ヶ月
+    assert abs(b["safety_margin_ratio"] - (20000000 - 15000000) / 20000000) < 1e-9
+    assert abs(b["bep_achievement"] - 20000000 / 15000000) < 1e-9
+    assert abs(b["top_clients"][0]["share"] - 0.5) < 1e-9
     assert b["top_clients"][0]["name"] in ("A社", "B社")
     assert b["top_clients"][0]["amount"] == 10000000
     assert len(b["top_clients"]) <= 5
