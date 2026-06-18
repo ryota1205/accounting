@@ -7,6 +7,8 @@ import { api } from "../api/client";
 import { Deal } from "../api/types";
 import { yen } from "../lib/format";
 
+type SortKey = "revenue_month" | "held_on" | "client" | "training_name" | "instructor" | "payment_status";
+
 export default function Deals() {
   const { fiscalYear } = useFiscalYear();
   const navigate = useNavigate();
@@ -14,6 +16,11 @@ export default function Deals() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
+
+  function toggleSort(key: SortKey) {
+    setSort((p) => (p && p.key === key ? { key, dir: p.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
+  }
 
   function load() {
     setRows(null); setError(null);
@@ -27,6 +34,22 @@ export default function Deals() {
     await api.deleteDeal(id);
     load();
   }
+
+  const sortedRows = rows && sort
+    ? [...rows].sort((a, b) => {
+        const mul = sort.dir === "asc" ? 1 : -1;
+        return String(a[sort.key] ?? "").localeCompare(String(b[sort.key] ?? ""), "ja") * mul;
+      })
+    : rows;
+
+  const sortTh = (key: SortKey, label: string, align: "left" | "center" = "left") => (
+    <th
+      style={{ textAlign: align, cursor: "pointer", userSelect: "none", whiteSpace: "nowrap" }}
+      onClick={() => toggleSort(key)}
+    >
+      {label}{sort?.key === key ? (sort.dir === "asc" ? " ▲" : " ▼") : " ⇅"}
+    </th>
+  );
 
   return (
     <Layout title="案件一覧"
@@ -53,15 +76,19 @@ export default function Deals() {
           <table>
             <thead>
               <tr>
-                <th style={{ textAlign: "center" }}>売上月</th>
-                <th style={{ textAlign: "center" }}>実施日</th>
-                <th>企業名</th><th>研修名</th><th>講師</th>
+                {sortTh("revenue_month", "売上月", "center")}
+                {sortTh("held_on", "実施日", "center")}
+                {sortTh("client", "企業名")}
+                {sortTh("training_name", "研修名")}
+                {sortTh("instructor", "講師")}
                 <th className="num">研修費用</th><th className="num">請求額</th>
-                <th style={{ textAlign: "center" }}>入金予定</th><th>入金</th><th></th>
+                <th style={{ textAlign: "center" }}>入金予定</th>
+                {sortTh("payment_status", "入金", "center")}
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((d) => (
+              {sortedRows!.map((d) => (
                 <tr key={d.id}>
                   <td style={{ textAlign: "center" }}>{parseInt(d.revenue_month.slice(5, 7), 10)}</td>
                   <td style={{ textAlign: "center" }}>{d.held_on.slice(5)}</td>
