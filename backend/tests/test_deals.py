@@ -88,3 +88,18 @@ def test_create_deal_autoregisters_masters(client):
     masters = client.get("/api/masters/clients").json()
     names = [m["name"] for m in masters]
     assert "自動登録企業" in names
+
+
+def test_create_deal_rejects_invalid_payment_status(client):
+    res = client.post("/api/deals", json=_sample_payload(payment_status="bogus"))
+    assert res.status_code == 422
+
+
+def test_get_deal_not_found(client):
+    assert client.get("/api/deals/99999").status_code == 404
+
+
+def test_create_deal_autoregisters_instructor(client):
+    client.post("/api/deals", json=_sample_payload(client="X社", instructor="新講師Z"))
+    names = [m["name"] for m in client.get("/api/masters/instructors").json()]
+    assert "新講師Z" in names

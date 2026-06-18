@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 from sqlmodel import Session, select
 
@@ -34,6 +34,7 @@ def build_deal(data: DealIn, deal: Optional[Deal] = None) -> Deal:
         payment_due=data.payment_due,
         payment_status=data.payment_status,
         paid_on=data.paid_on,
+        updated_at=datetime.utcnow(),
         support_staff=data.support_staff,
         note=data.note,
     )

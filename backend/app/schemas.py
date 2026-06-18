@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Optional
+from typing import Optional, Literal
 from sqlmodel import SQLModel
 
 
@@ -17,7 +17,7 @@ class DealIn(SQLModel):
     billing: Optional[int] = None  # 未指定なら fee+transport+other+tax
     instructor_fee: int = 0
     payment_due: Optional[date] = None
-    payment_status: str = "unpaid"
+    payment_status: Literal["unpaid", "paid"] = "unpaid"
     paid_on: Optional[date] = None
     support_staff: Optional[str] = None
     note: Optional[str] = None

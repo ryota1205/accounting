@@ -44,7 +44,11 @@ def update_master(kind: str, row_id: int, data: MasterIn, session: Session = Dep
     row = session.get(model, row_id)
     if row is None:
         raise HTTPException(status_code=404, detail="マスタが見つかりません")
-    row.name = data.name.strip()
+    name = data.name.strip()
+    existing = session.exec(select(model).where(model.name == name)).first()
+    if existing and existing.id != row_id:
+        raise HTTPException(status_code=409, detail="同じ名称が既に存在します")
+    row.name = name
     row.active = data.active
     session.add(row)
     session.commit()

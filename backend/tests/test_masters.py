@@ -24,3 +24,10 @@ def test_master_duplicate_name_rejected(client):
 
 def test_unknown_kind_returns_404(client):
     assert client.get("/api/masters/unknown").status_code == 404
+
+
+def test_update_master_duplicate_rejected(client):
+    client.post("/api/masters/clients", json={"name": "A社"})
+    b = client.post("/api/masters/clients", json={"name": "B社"}).json()
+    res = client.put(f"/api/masters/clients/{b['id']}", json={"name": "A社", "active": True})
+    assert res.status_code == 409

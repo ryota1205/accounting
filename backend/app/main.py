@@ -1,7 +1,17 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI(title="研修売上管理API")
+from app.db import init_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(title="研修売上管理API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -10,23 +20,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from app.db import init_db
-
-
-@app.on_event("startup")
-def on_startup():
-    init_db()
-
 
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
 
 
-from app.routers import deals
+from app.routers import deals, masters
 
 app.include_router(deals.router)
-
-from app.routers import masters
-
 app.include_router(masters.router)
