@@ -21,3 +21,8 @@ def on_startup():
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+from app.routers import deals
+
+app.include_router(deals.router)
