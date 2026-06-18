@@ -1,0 +1,74 @@
+import {
+  Deal, DealInput, Master, MasterKind,
+  MonthlySummary, AnnualSummary, ByRow, PLSummary, Setting,
+} from "./types";
+
+async function req<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, {
+    headers: { "Content-Type": "application/json" },
+    ...init,
+  });
+  if (!res.ok) {
+    let detail = `エラー (${res.status})`;
+    try { const b = await res.json(); if (b.detail) detail = b.detail; } catch { /* noop */ }
+    throw new Error(detail);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+export interface DealFilter {
+  fiscal_year?: number; month?: number; client?: string;
+  instructor?: string; agency?: string; payment_status?: string; q?: string;
+  [key: string]: unknown;
+}
+
+function qs(params: Record<string, unknown>): string {
+  const u = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && v !== "") u.set(k, String(v));
+  });
+  const s = u.toString();
+  return s ? `?${s}` : "";
+}
+
+export const api = {
+  listDeals: (f: DealFilter) => req<Deal[]>(`/api/deals${qs(f)}`),
+  getDeal: (id: number) => req<Deal>(`/api/deals/${id}`),
+  createDeal: (d: DealInput) => req<Deal>("/api/deals", { method: "POST", body: JSON.stringify(d) }),
+  updateDeal: (id: number, d: DealInput) =>
+    req<Deal>(`/api/deals/${id}`, { method: "PUT", body: JSON.stringify(d) }),
+  deleteDeal: (id: number) => req<void>(`/api/deals/${id}`, { method: "DELETE" }),
+  markPaid: (id: number, paid_on?: string) =>
+    req<Deal>(`/api/deals/${id}/pay`, { method: "POST", body: JSON.stringify({ paid_on }) }),
+
+  listMasters: (kind: MasterKind) => req<Master[]>(`/api/masters/${kind}`),
+  createMaster: (kind: MasterKind, name: string) =>
+    req<Master>(`/api/masters/${kind}`, { method: "POST", body: JSON.stringify({ name }) }),
+  updateMaster: (kind: MasterKind, id: number, name: string, active: boolean) =>
+    req<Master>(`/api/masters/${kind}/${id}`, { method: "PUT", body: JSON.stringify({ name, active }) }),
+  deleteMaster: (kind: MasterKind, id: number) =>
+    req<void>(`/api/masters/${kind}/${id}`, { method: "DELETE" }),
+
+  monthly: (fy: number) => req<MonthlySummary>(`/api/summary/monthly${qs({ fiscal_year: fy })}`),
+  annual: (fy: number) => req<AnnualSummary>(`/api/summary/annual${qs({ fiscal_year: fy })}`),
+  by: (dim: string, frm: string, to: string) =>
+    req<ByRow[]>(`/api/summary/by${qs({ dim, frm, to })}`),
+  pl: (fy: number) => req<PLSummary>(`/api/summary/pl${qs({ fiscal_year: fy })}`),
+
+  getSetting: (fy: number) => req<Setting>(`/api/settings/${fy}`),
+  putSetting: (fy: number, monthly_fixed_cost: number) =>
+    req<Setting>(`/api/settings/${fy}`, { method: "PUT", body: JSON.stringify({ monthly_fixed_cost }) }),
+
+  listPayments: (status: string, fy: number) =>
+    req<Deal[]>(`/api/payments${qs({ status, fiscal_year: fy })}`),
+
+  exportUrl: (fy: number) => `/api/export/excel?fiscal_year=${fy}`,
+  importExcel: async (file: File, wipe: boolean) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await fetch(`/api/import/excel?wipe=${wipe}`, { method: "POST", body: fd });
+    if (!res.ok) throw new Error(`取り込みに失敗しました (${res.status})`);
+    return res.json() as Promise<{ imported: number }>;
+  },
+};
