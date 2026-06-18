@@ -8,8 +8,38 @@ import { Card } from "../components/Card";
 import { Loading, ErrorState } from "../components/States";
 import { useFiscalYear } from "../context/FiscalYearContext";
 import { api } from "../api/client";
-import { PLSummary, MonthlySummary } from "../api/types";
+import { PLSummary, MonthlySummary, Deal } from "../api/types";
 import { yen, pct } from "../lib/format";
+
+// 前年同月比グラフでクリックした月の実施企業を表示するテーブル
+function MonthDealsTable({ title, deals }: { title: string; deals: Deal[] }) {
+  const total = deals.reduce((s, d) => s + d.billing, 0);
+  return (
+    <div style={{ marginTop: 12 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
+        {title}　{deals.length}件 / 計 {yen(total)}
+      </div>
+      {deals.length === 0 ? <div className="state">実施なし</div> : (
+        <table>
+          <thead>
+            <tr><th>実施日</th><th>企業名</th><th>研修名</th><th>講師</th><th className="num">請求額</th></tr>
+          </thead>
+          <tbody>
+            {deals.map((d) => (
+              <tr key={d.id}>
+                <td>{d.held_on}</td>
+                <td>{d.client}</td>
+                <td>{d.training_name ?? "—"}</td>
+                <td>{d.instructor ?? "—"}</td>
+                <td className="num">{yen(d.billing)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
 
 // 年間BEP図用: 0 と (現売上 or BEP の大きい方×1.1) の2点で直線を引く
 function bepLineData(pl: PLSummary) {
@@ -29,6 +59,9 @@ export default function ProfitLoss() {
   const [fixed, setFixed] = useState<number>(0);
   const [savingMsg, setSavingMsg] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
+  const [monthDeals, setMonthDeals] = useState<{ cur: Deal[]; prev: Deal[] } | null>(null);
+  const [monthErr, setMonthErr] = useState<string | null>(null);
 
   function reload() {
     setError(null); setPl(null);
@@ -37,6 +70,18 @@ export default function ProfitLoss() {
       .catch((e) => setError(e.message));
   }
   useEffect(reload, [fiscalYear]);
+
+  // 選択された月の「当年度／前年度」実施企業を取得（既存の deals API を流用）
+  useEffect(() => {
+    if (selectedMonth === null) { setMonthDeals(null); return; }
+    setMonthDeals(null); setMonthErr(null);
+    Promise.all([
+      api.listDeals({ fiscal_year: fiscalYear, month: selectedMonth }),
+      api.listDeals({ fiscal_year: fiscalYear - 1, month: selectedMonth }),
+    ])
+      .then(([cur, prev]) => setMonthDeals({ cur, prev }))
+      .catch((e) => setMonthErr((e as Error).message));
+  }, [selectedMonth, fiscalYear]);
 
   async function saveFixed() {
     setSavingMsg("保存中…");
@@ -116,17 +161,40 @@ export default function ProfitLoss() {
       <div className="panel">
         <h3>前年同月比</h3>
         {!hasPrev && <div className="hint">※ 前年度（{fiscalYear - 1}年度）データがありません。</div>}
+        <div className="hint">グラフの月をクリックすると、その月の実施企業を下に表示します。</div>
         <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={yoyData}>
+          <ComposedChart
+            data={yoyData}
+            onClick={(state) => {
+              const lbl = (state as { activeLabel?: string } | null)?.activeLabel;
+              if (lbl) setSelectedMonth(parseInt(lbl, 10));
+            }}
+          >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis tickFormatter={(v) => `${Math.round(v / 10000)}万`} />
             <Tooltip formatter={(v: number) => yen(v)} />
             <Legend />
-            <Bar dataKey="当年度" fill="#2563eb" />
+            <Bar dataKey="当年度" fill="#2563eb" style={{ cursor: "pointer" }} />
             <Line dataKey="前年度" stroke="#d97706" />
           </ComposedChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className="panel matrix">
+        <h3>{selectedMonth === null ? "実施企業（月別明細）" : `${selectedMonth}月の実施企業`}</h3>
+        {selectedMonth === null ? (
+          <div className="hint">前年同月比グラフの棒をクリックすると、その月の実施企業を表示します。</div>
+        ) : monthErr ? (
+          <ErrorState message={monthErr} />
+        ) : monthDeals === null ? (
+          <Loading />
+        ) : (
+          <>
+            <MonthDealsTable title={`当年度（${fiscalYear}年度）`} deals={monthDeals.cur} />
+            <MonthDealsTable title={`前年度（${fiscalYear - 1}年度）`} deals={monthDeals.prev} />
+          </>
+        )}
       </div>
 
       <div className="panel">
