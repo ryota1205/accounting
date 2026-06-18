@@ -26,9 +26,10 @@ def health():
     return {"status": "ok"}
 
 
-from app.routers import deals, masters, settings, summary
+from app.routers import deals, masters, settings, summary, payments
 
 app.include_router(deals.router)
 app.include_router(masters.router)
 app.include_router(settings.router)
 app.include_router(summary.router)
+app.include_router(payments.router)

@@ -5,7 +5,8 @@ from sqlmodel import Session, select
 
 from app.db import get_session
 from app.models import Deal
-from app.schemas import DealIn
+from datetime import date as date_cls
+from app.schemas import DealIn, PayIn
 from app.service import build_deal, register_masters
 
 router = APIRouter(prefix="/api/deals", tags=["deals"])
@@ -93,3 +94,16 @@ def delete_deal(deal_id: int, session: Session = Depends(get_session)):
     session.delete(deal)
     session.commit()
     return Response(status_code=204)
+
+
+@router.post("/{deal_id}/pay")
+def mark_paid(deal_id: int, data: PayIn, session: Session = Depends(get_session)):
+    deal = session.get(Deal, deal_id)
+    if deal is None:
+        raise HTTPException(status_code=404, detail="案件が見つかりません")
+    deal.payment_status = "paid"
+    deal.paid_on = data.paid_on or date_cls.today()
+    session.add(deal)
+    session.commit()
+    session.refresh(deal)
+    return deal
