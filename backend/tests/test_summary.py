@@ -77,3 +77,28 @@ def test_summary_by_instructor_share(client):
     takahashi = next(r for r in body if r["name"] == "高橋")
     assert takahashi["amount"] == 440000
     assert abs(takahashi["share"] - 440000 / 1100000) < 1e-9
+
+
+def test_summary_pl_full(client):
+    client.put("/api/settings/2026", json={"monthly_fixed_cost": 1000000})
+    client.post("/api/deals", json=dict(held_on="2026-04-10", client="A社",
+                fee=10000000, transport=0, other=0, instructor_fee=2000000))
+    client.post("/api/deals", json=dict(held_on="2026-05-10", client="B社",
+                fee=10000000, transport=0, other=0, instructor_fee=2000000))
+    res = client.get("/api/summary/pl", params={"fiscal_year": 2026})
+    assert res.status_code == 200
+    b = res.json()
+    assert b["net_sales"] == 20000000
+    assert b["variable"] == 4000000
+    assert b["annual_fixed"] == 12000000
+    assert abs(b["cm_ratio"] - 0.8) < 1e-9
+    assert b["bep"] == 15000000
+    assert b["operating_profit"] == 4000000
+    assert b["monthly_net"][0] == 10000000
+    assert b["monthly_net"][1] == 10000000
+    assert abs(b["gross_margin_rate"][0] - 0.8) < 1e-9
+    assert b["cum_net"][0] == 10000000
+    assert b["cum_total_cost"][0] == 3000000
+    assert b["top_clients"][0]["name"] in ("A社", "B社")
+    assert b["top_clients"][0]["amount"] == 10000000
+    assert len(b["top_clients"]) <= 5
