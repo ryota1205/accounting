@@ -211,6 +211,76 @@ def _month_metrics(session: Session, year: int, month: int, rates: dict) -> dict
     }
 
 
+def _group_metrics(deals, key_fn) -> list[dict]:
+    agg: dict[str, dict] = {}
+    for d in deals:
+        key = key_fn(d) or "(未設定)"
+        b = agg.setdefault(key, {"name": key, "sales": 0, "gross": 0, "count": 0})
+        b["sales"] += _net(d)
+        b["gross"] += _net(d) - _cost(d)
+        b["count"] += 1
+    rows = []
+    for b in sorted(agg.values(), key=lambda x: x["sales"], reverse=True):
+        b["gross_rate"] = (b["gross"] / b["sales"]) if b["sales"] else 0.0
+        rows.append(b)
+    return rows
+
+
+@router.get("/analysis")
+def analysis(fiscal_year: int, session: Session = Depends(get_session)):
+    deals = _deals_in_fy(session, fiscal_year)
+    prev = _deals_in_fy(session, fiscal_year - 1)
+
+    by_client = _group_metrics(deals, lambda d: d.client)
+    by_theme = _group_metrics(deals, lambda d: d.training_theme or d.training_name)
+
+    # 新規/既存/リピート別
+    total_sales = sum(_net(d) for d in deals)
+    ctype: dict[str, int] = {}
+    for d in deals:
+        ctype[d.customer_type or "(未設定)"] = ctype.get(d.customer_type or "(未設定)", 0) + _net(d)
+    by_customer_type = [
+        {"type": t, "sales": s, "share": (s / total_sales) if total_sales else 0.0}
+        for t, s in sorted(ctype.items(), key=lambda x: x[1], reverse=True)
+    ]
+
+    # 上位顧客依存度
+    client_sales = sorted((r["sales"] for r in by_client), reverse=True)
+
+    def topn(n: int) -> float:
+        return (sum(client_sales[:n]) / total_sales) if total_sales else 0.0
+    dependency = {"top1": topn(1), "top3": topn(3), "top5": topn(5), "total": total_sales}
+
+    # 前年同月比較（売上=税抜・粗利・受注件数）
+    def buckets(ds, fy, amount_fn):
+        return calc.monthly_buckets(fy, [(d.revenue_month.year, d.revenue_month.month, amount_fn(d)) for d in ds])
+    is_order = lambda d: 1 if d.project_status in ORDER_STATUSES else 0
+    yoy = {
+        "labels": MONTH_LABELS,
+        "sales_cur": buckets(deals, fiscal_year, _net),
+        "sales_prev": buckets(prev, fiscal_year - 1, _net),
+        "gross_cur": buckets(deals, fiscal_year, lambda d: _net(d) - _cost(d)),
+        "gross_prev": buckets(prev, fiscal_year - 1, lambda d: _net(d) - _cost(d)),
+        "orders_cur": buckets(deals, fiscal_year, is_order),
+        "orders_prev": buckets(prev, fiscal_year - 1, is_order),
+        "prev_has_data": len(prev) > 0,
+    }
+    yoy["total_sales_cur"] = sum(yoy["sales_cur"])
+    yoy["total_sales_prev"] = sum(yoy["sales_prev"])
+    yoy["total_gross_cur"] = sum(yoy["gross_cur"])
+    yoy["total_gross_prev"] = sum(yoy["gross_prev"])
+    yoy["total_orders_cur"] = sum(yoy["orders_cur"])
+    yoy["total_orders_prev"] = sum(yoy["orders_prev"])
+
+    return {
+        "by_client": by_client,
+        "by_theme": by_theme,
+        "by_customer_type": by_customer_type,
+        "dependency": dependency,
+        "yoy": yoy,
+    }
+
+
 def _funnel_metrics(session: Session, year: int, month: int) -> dict:
     start = date(year, month, 1)
     end = calc.month_end(start)

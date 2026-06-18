@@ -1,7 +1,7 @@
 import {
   Deal, DealInput, Master, MasterKind,
   MonthlySummary, AnnualSummary, ByRow, PLSummary, Setting, ConfidenceRate,
-  MonthSummary, MonthlyFixedCost, SalesFunnel, SalesActivity,
+  MonthSummary, MonthlyFixedCost, SalesFunnel, SalesActivity, Analysis,
 } from "./types";
 
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
@@ -87,6 +87,7 @@ export const api = {
     req<MonthlyFixedCost>(`/api/settings/monthly-fixed-cost/${ym}`,
       { method: "PUT", body: JSON.stringify({ fixed_cost_amount, memo }) }),
 
+  analysis: (fy: number) => req<Analysis>(`/api/summary/analysis${qs({ fiscal_year: fy })}`),
   salesFunnel: (ym: string) => req<SalesFunnel>(`/api/summary/sales${qs({ ym })}`),
   getSalesActivity: (ym: string) => req<SalesActivity>(`/api/sales-activity/${ym}`),
   putSalesActivity: (ym: string, inquiries: number, first_meetings: number, memo?: string | null) =>

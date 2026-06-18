@@ -115,6 +115,27 @@ export interface SalesFunnel {
 }
 export interface SalesActivity { month: string; inquiries: number; first_meetings: number; memo: string | null; }
 
+export interface GroupRow { name: string; sales: number; gross: number; gross_rate: number; count: number; }
+export interface CustomerTypeRow { type: string; sales: number; share: number; }
+export interface Dependency { top1: number; top3: number; top5: number; total: number; }
+export interface YoyCompare {
+  labels: string[];
+  sales_cur: number[]; sales_prev: number[];
+  gross_cur: number[]; gross_prev: number[];
+  orders_cur: number[]; orders_prev: number[];
+  prev_has_data: boolean;
+  total_sales_cur: number; total_sales_prev: number;
+  total_gross_cur: number; total_gross_prev: number;
+  total_orders_cur: number; total_orders_prev: number;
+}
+export interface Analysis {
+  by_client: GroupRow[];
+  by_theme: GroupRow[];
+  by_customer_type: CustomerTypeRow[];
+  dependency: Dependency;
+  yoy: YoyCompare;
+}
+
 export interface Master { id: number; name: string; active: boolean; agency?: string | null; }
 export type MasterKind = "clients" | "instructors" | "agencies";
 
