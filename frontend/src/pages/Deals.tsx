@@ -32,7 +32,7 @@ export default function Deals() {
     <Layout title="案件一覧"
       actions={<button className="btn" onClick={() => navigate("/deals/new")}>＋ 案件登録</button>}>
       <div className="panel" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <input style={{ fontSize: 13 }} placeholder="企業・研修・講師で検索" value={q}
+        <input style={{ fontSize: 13, flex: 1 }} placeholder="企業・研修・講師で検索" value={q}
           onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && load()} />
         <select style={{ fontSize: 13 }} value={status} onChange={(e) => setStatus(e.target.value)}>
@@ -43,7 +43,7 @@ export default function Deals() {
         <button className="btn sub sm" onClick={load}>検索</button>
       </div>
       <div className="panel matrix">
-        <div style={{ textAlign: "center", fontWeight: 700, fontSize: 18, marginBottom: 12 }}>
+        <div style={{ textAlign: "left", fontWeight: 700, fontSize: 26, marginBottom: 12 }}>
           {fiscalYear}年度
         </div>
         {error ? <ErrorState message={error} />
@@ -63,7 +63,7 @@ export default function Deals() {
             <tbody>
               {rows.map((d) => (
                 <tr key={d.id}>
-                  <td style={{ textAlign: "center" }}>{d.revenue_month.slice(5)}</td>
+                  <td style={{ textAlign: "center" }}>{parseInt(d.revenue_month.slice(5, 7), 10)}</td>
                   <td style={{ textAlign: "center" }}>{d.held_on.slice(5)}</td>
                   <td>{d.client}</td>
                   <td>{d.training_name ?? "—"}</td>
