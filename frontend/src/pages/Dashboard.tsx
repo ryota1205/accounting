@@ -7,6 +7,7 @@ import { useFiscalYear } from "../context/FiscalYearContext";
 import { api } from "../api/client";
 import { MonthlySummary, PLSummary, Deal } from "../api/types";
 import { yen, pct } from "../lib/format";
+import { unpaidAmount } from "../lib/deal";
 
 export default function Dashboard() {
   const { fiscalYear } = useFiscalYear();
@@ -20,7 +21,7 @@ export default function Dashboard() {
     Promise.all([
       api.monthly(fiscalYear),
       api.pl(fiscalYear),
-      api.listPayments("unpaid", fiscalYear),
+      api.listDeals({ fiscal_year: fiscalYear }),
     ]).then(([m, p, u]) => { setMonthly(m); setPl(p); setUnpaid(u); })
       .catch((e) => setError(e.message));
   }, [fiscalYear]);
@@ -29,7 +30,8 @@ export default function Dashboard() {
   if (!monthly || !pl || !unpaid) return <Layout title="ダッシュボード"><Loading /></Layout>;
 
   const chartData = monthly.labels.map((l, i) => ({ name: l, 売上: monthly.current[i] }));
-  const unpaidTotal = unpaid.reduce((s, d) => s + d.billing, 0);
+  const unpaidDeals = unpaid.filter((d) => d.payment_status !== "paid" && unpaidAmount(d) > 0);
+  const unpaidTotal = unpaidDeals.reduce((s, d) => s + unpaidAmount(d), 0);
 
   return (
     <Layout title="ダッシュボード">
@@ -38,7 +40,7 @@ export default function Dashboard() {
         <Card label="営業利益" value={yen(pl.operating_profit)} />
         <Card label="BEP達成率" value={pct(pl.bep_achievement)}
           sub={`損益分岐点 ${yen(pl.bep)}`} />
-        <Card label="未入金合計" value={yen(unpaidTotal)} sub={`${unpaid.length}件`} />
+        <Card label="未入金合計" value={yen(unpaidTotal)} sub={`${unpaidDeals.length}件`} />
       </div>
       <div className="panel">
         <h3>月別売上</h3>
@@ -58,15 +60,17 @@ export default function Dashboard() {
         </ResponsiveContainer>
       </div>
       <div className="panel">
-        <h3>今月以降の入金予定（未入金）</h3>
-        {unpaid.length === 0 ? <div className="state">未入金はありません</div> : (
+        <h3>入金予定（未入金・予定日が近い順）</h3>
+        {unpaidDeals.length === 0 ? <div className="state">未入金はありません</div> : (
           <table>
-            <thead><tr><th>入金予定日</th><th>企業名</th><th className="num">請求額</th></tr></thead>
+            <thead><tr><th>入金予定日</th><th>企業名</th><th className="num">未入金額</th></tr></thead>
             <tbody>
-              {unpaid.slice(0, 10).map((d) => (
+              {[...unpaidDeals]
+                .sort((a, b) => (a.payment_due ?? "9999").localeCompare(b.payment_due ?? "9999"))
+                .slice(0, 10).map((d) => (
                 <tr key={d.id}>
                   <td>{d.payment_due ?? "—"}</td><td>{d.client}</td>
-                  <td className="num">{yen(d.billing)}</td>
+                  <td className="num">{yen(unpaidAmount(d))}</td>
                 </tr>
               ))}
             </tbody>

@@ -33,9 +33,21 @@ table { width: 100%; border-collapse: collapse; font-size: 13px; }
 th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
 th { color: var(--muted); font-weight: 600; }
 td.num, th.num { text-align: right; }
-.badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+.badge { padding: 2px 8px; border-radius: 999px; font-size: 12px; white-space: nowrap; }
 .badge.unpaid { background: #fef3c7; color: var(--warn); }
 .badge.paid { background: #dcfce7; color: var(--ok); }
+/* 入金ステータス */
+.badge.pay.uninvoiced { background: #f1f5f9; color: var(--muted); }
+.badge.pay.invoiced { background: #e0e7ff; color: #4338ca; }
+.badge.pay.scheduled { background: #dbeafe; color: #1d4ed8; }
+.badge.pay.partial { background: #fef3c7; color: var(--warn); }
+.badge.pay.paid { background: #dcfce7; color: var(--ok); }
+.badge.pay.overdue { background: #fee2e2; color: var(--danger); font-weight: 700; }
+/* 入金アラート */
+.badge.alert.due_soon { background: #fef3c7; color: var(--warn); }
+.badge.alert.partial_remain { background: #fef3c7; color: var(--warn); }
+.badge.alert.overdue { background: #fee2e2; color: var(--danger); font-weight: 700; }
+.badge.alert.long_overdue { background: var(--danger); color: #fff; font-weight: 700; }
 .state { padding: 40px; text-align: center; color: var(--muted); }
 .err { color: var(--danger); }
 .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }

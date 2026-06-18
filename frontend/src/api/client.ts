@@ -1,6 +1,6 @@
 import {
   Deal, DealInput, Master, MasterKind,
-  MonthlySummary, AnnualSummary, ByRow, PLSummary, Setting,
+  MonthlySummary, AnnualSummary, ByRow, PLSummary, Setting, ConfidenceRate,
 } from "./types";
 
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
@@ -75,6 +75,10 @@ export const api = {
 
   listPayments: (status: string, fy: number) =>
     req<Deal[]>(`/api/payments${qs({ status, fiscal_year: fy })}`),
+
+  listConfidenceRates: () => req<ConfidenceRate[]>(`/api/confidence-rates`),
+  updateConfidenceRate: (rank: string, rate: number) =>
+    req<ConfidenceRate>(`/api/confidence-rates/${rank}`, { method: "PUT", body: JSON.stringify({ rate }) }),
 
   exportUrl: (fy: number) => `/api/export/excel?fiscal_year=${fy}`,
   importExcel: async (file: File, wipe: boolean) => {

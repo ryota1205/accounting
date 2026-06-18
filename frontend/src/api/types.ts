@@ -1,3 +1,6 @@
+export type PaymentStatus =
+  | "uninvoiced" | "invoiced" | "scheduled" | "partial" | "paid" | "overdue";
+
 export interface Deal {
   id: number;
   fiscal_year: number;
@@ -14,10 +17,23 @@ export interface Deal {
   billing: number;
   instructor_fee: number;
   payment_due: string | null;
-  payment_status: "unpaid" | "paid";
+  payment_status: PaymentStatus;
   paid_on: string | null;
   support_staff: string | null;
   note: string | null;
+  // 拡張
+  project_name: string | null;
+  training_theme: string | null;
+  direct_cost: number | null;
+  allocated_fixed_cost: number;
+  expected_sales_amount: number;
+  confidence_rank: "A" | "B" | "C" | null;
+  project_status: string;
+  customer_type: "新規" | "既存" | "リピート" | null;
+  lost_reason: string | null;
+  invoice_date: string | null;
+  invoice_amount: number | null;
+  paid_amount: number;
 }
 
 export interface DealInput {
@@ -34,9 +50,26 @@ export interface DealInput {
   billing?: number | null;
   instructor_fee: number;
   payment_due?: string | null;
+  payment_status: PaymentStatus;
+  paid_on?: string | null;
   support_staff?: string | null;
   note?: string | null;
+  // 拡張
+  project_name?: string | null;
+  training_theme?: string | null;
+  direct_cost?: number | null;
+  allocated_fixed_cost: number;
+  expected_sales_amount: number;
+  confidence_rank?: "A" | "B" | "C" | null;
+  project_status: string;
+  customer_type?: "新規" | "既存" | "リピート" | null;
+  lost_reason?: string | null;
+  invoice_date?: string | null;
+  invoice_amount?: number | null;
+  paid_amount: number;
 }
+
+export interface ConfidenceRate { rank: string; rate: number; }
 
 export interface Master { id: number; name: string; active: boolean; agency?: string | null; }
 export type MasterKind = "clients" | "instructors" | "agencies";
