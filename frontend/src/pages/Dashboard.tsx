@@ -52,7 +52,7 @@ export default function Dashboard() {
               tickFormatter={(v) => `${v / 10000}万`}
             />
             <Tooltip formatter={(v: number) => yen(v)} />
-            <Bar dataKey="売上" fill="#2563eb" />
+            <Bar dataKey="売上" fill="#2563eb" maxBarSize={28} />
           </BarChart>
         </ResponsiveContainer>
       </div>
