@@ -26,3 +26,7 @@ def health():
 from app.routers import deals
 
 app.include_router(deals.router)
+
+from app.routers import masters
+
+app.include_router(masters.router)
