@@ -13,6 +13,22 @@ const EMPTY: DealInput = {
   instructor_fee: 0, payment_due: "", support_staff: "", note: "",
 };
 
+// 金額入力（3桁カンマ区切り表示）
+function MoneyInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={value ? value.toLocaleString("ja-JP") : ""}
+      placeholder="0"
+      onChange={(e) => {
+        const digits = e.target.value.replace(/[^\d]/g, "");
+        onChange(digits === "" ? 0 : parseInt(digits, 10));
+      }}
+    />
+  );
+}
+
 function MasterField({ kind, label, value, onChange, options, required }: {
   kind: MasterKind; label: string; value: string;
   onChange: (v: string) => void; options: Master[]; required?: boolean;
@@ -52,7 +68,7 @@ export default function DealForm() {
           held_on: d.held_on, client: d.client, revenue_month: d.revenue_month,
           agency: d.agency ?? "", training_name: d.training_name ?? "",
           instructor: d.instructor ?? "", fee: d.fee, transport: d.transport,
-          other: d.other, tax: d.tax, billing: d.billing,
+          other: d.other, tax: null, billing: null,
           instructor_fee: d.instructor_fee, payment_due: d.payment_due ?? "",
           support_staff: d.support_staff ?? "", note: d.note ?? "",
         });
@@ -61,7 +77,6 @@ export default function DealForm() {
   }, [id]);
 
   const set = (k: keyof DealInput, v: unknown) => setForm((f) => ({ ...f, [k]: v }));
-  const num = (k: keyof DealInput, v: string) => set(k, Number(v) || 0);
 
   const autoTax = previewTax(form.fee);
   const taxShown = form.tax ?? autoTax;
@@ -89,7 +104,7 @@ export default function DealForm() {
   return (
     <Layout title={editing ? "案件編集" : "案件登録"}>
       {error && <ErrorState message={error} />}
-      <form className="panel" onSubmit={submit}>
+      <form className="panel dealform" onSubmit={submit}>
         <div className="form-grid">
           <div className="field">
             <label className="req">実施日</label>
@@ -114,20 +129,19 @@ export default function DealForm() {
           </div>
           <div className="field">
             <label>研修費用</label>
-            <input type="number" value={form.fee} onChange={(e) => num("fee", e.target.value)} />
+            <MoneyInput value={form.fee} onChange={(n) => set("fee", n)} />
           </div>
           <div className="field">
             <label>交通費</label>
-            <input type="number" value={form.transport} onChange={(e) => num("transport", e.target.value)} />
+            <MoneyInput value={form.transport} onChange={(n) => set("transport", n)} />
           </div>
           <div className="field">
             <label>その他</label>
-            <input type="number" value={form.other} onChange={(e) => num("other", e.target.value)} />
+            <MoneyInput value={form.other} onChange={(n) => set("other", n)} />
           </div>
           <div className="field">
             <label>講師料（変動費）</label>
-            <input type="number" value={form.instructor_fee}
-              onChange={(e) => num("instructor_fee", e.target.value)} />
+            <MoneyInput value={form.instructor_fee} onChange={(n) => set("instructor_fee", n)} />
           </div>
           <div className="field">
             <label>入金予定日</label>
