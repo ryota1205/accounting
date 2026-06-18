@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { Loading, Empty, ErrorState } from "../components/States";
@@ -17,6 +17,21 @@ export default function Deals() {
   const [status, setStatus] = useState("");
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [maxH, setMaxH] = useState(500);
+
+  // テーブルのスクロール領域を画面内に収める高さに調整（横スクロールバーを常に表示）
+  useEffect(() => {
+    function recompute() {
+      const el = scrollRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top;
+      setMaxH(Math.max(240, window.innerHeight - top - 44));
+    }
+    recompute();
+    window.addEventListener("resize", recompute);
+    return () => window.removeEventListener("resize", recompute);
+  }, [rows]);
 
   function toggleSort(key: SortKey) {
     setSort((p) => (p && p.key === key ? { key, dir: p.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
@@ -68,7 +83,7 @@ export default function Deals() {
         </select>
         <button className="btn sub sm" onClick={load}>検索</button>
       </div>
-      <div className="panel matrix">
+      <div className="panel">
         <div style={{ textAlign: "left", fontWeight: 700, fontSize: 26, marginBottom: 12 }}>
           {fiscalYear}年度
         </div>
@@ -76,7 +91,8 @@ export default function Deals() {
           : rows === null ? <Loading />
           : rows.length === 0 ? <Empty />
           : (
-          <table>
+          <div ref={scrollRef} className="table-scroll" style={{ maxHeight: maxH }}>
+          <table className="sticky-head">
             <thead>
               <tr>
                 {sortTh("revenue_month", "売上月", "center")}
@@ -95,8 +111,8 @@ export default function Deals() {
                 <tr key={d.id}>
                   <td style={{ textAlign: "center" }}>{parseInt(d.revenue_month.slice(5, 7), 10)}</td>
                   <td style={{ textAlign: "center" }}>{d.held_on.slice(5)}</td>
-                  <td>{d.client}</td>
-                  <td>{d.training_name ?? "—"}</td>
+                  <td className="cell-wrap" style={{ maxWidth: 220 }}>{d.client}</td>
+                  <td className="cell-wrap" style={{ maxWidth: 200 }}>{d.training_name ?? "—"}</td>
                   <td>{d.instructor ?? "—"}</td>
                   <td className="num">{yen(d.fee)}</td>
                   <td className="num">{yen(d.billing)}</td>
@@ -111,6 +127,7 @@ export default function Deals() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </Layout>
