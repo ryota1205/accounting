@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
+import MonthlySummary from "./pages/MonthlySummary";
 import Deals from "./pages/Deals";
 import DealForm from "./pages/DealForm";
 import AnnualMatrix from "./pages/AnnualMatrix";
@@ -14,6 +15,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/monthly" element={<MonthlySummary />} />
       <Route path="/deals" element={<Deals />} />
       <Route path="/deals/new" element={<DealForm />} />
       <Route path="/deals/:id/edit" element={<DealForm />} />

@@ -46,6 +46,11 @@ class ConfidenceRateIn(SQLModel):
     rate: float = 0.0
 
 
+class MonthlyFixedCostIn(SQLModel):
+    fixed_cost_amount: int = 0
+    memo: Optional[str] = None
+
+
 class SettingIn(SQLModel):
     monthly_fixed_cost: int = 0
 

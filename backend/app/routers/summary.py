@@ -3,10 +3,12 @@ from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session, select
 
 from app.db import get_session
-from app.models import Deal, Setting
+from app.models import Deal, Setting, MonthlyFixedCost, ConfidenceRate
 from app import calc
 
 router = APIRouter(prefix="/api/summary", tags=["summary"])
+
+ORDER_STATUSES = {"受注", "実施済", "請求済", "入金済"}
 
 MONTH_LABELS = ["4月", "5月", "6月", "7月", "8月", "9月",
                 "10月", "11月", "12月", "1月", "2月", "3月"]
@@ -138,4 +140,94 @@ def profit_loss(fiscal_year: int, session: Session = Depends(get_session)):
         "cum_net": cum_net,
         "cum_total_cost": cum_total_cost,
         "top_clients": top_clients,
+    }
+
+
+# ===== 月次サマリー =====
+def _invoice_amount(d: Deal) -> int:
+    return d.invoice_amount if d.invoice_amount is not None else d.billing
+
+
+def _unpaid_amount(d: Deal) -> int:
+    if d.payment_status == "paid":
+        return 0
+    return max(0, _invoice_amount(d) - (d.paid_amount or 0))
+
+
+def _month_fixed_cost(session: Session, year: int, month: int) -> int:
+    ym = f"{year:04d}-{month:02d}"
+    row = session.get(MonthlyFixedCost, ym)
+    if row is not None:
+        return row.fixed_cost_amount
+    s = session.get(Setting, calc.fiscal_year_of(date(year, month, 1)))
+    return s.monthly_fixed_cost if s else 0
+
+
+def _rates(session: Session) -> dict:
+    rows = session.exec(select(ConfidenceRate)).all()
+    if not rows:
+        # 未投入なら初期値を投入（テスト/初回起動向け）
+        for rank, rate in {"A": 0.8, "B": 0.5, "C": 0.2}.items():
+            session.add(ConfidenceRate(rank=rank, rate=rate))
+        session.commit()
+        rows = session.exec(select(ConfidenceRate)).all()
+    return {r.rank: r.rate for r in rows}
+
+
+def _month_metrics(session: Session, year: int, month: int, rates: dict) -> dict:
+    start = date(year, month, 1)
+    end = calc.month_end(start)
+    deals = session.exec(
+        select(Deal).where(Deal.revenue_month >= start, Deal.revenue_month <= end)
+    ).all()
+    net = sum(_net(d) for d in deals)
+    cost = sum(_cost(d) for d in deals)
+    gross = net - cost
+    gross_rate = (gross / net) if net else 0.0
+    fixed = _month_fixed_cost(session, year, month)
+    cm_ratio = (gross / net) if net else 0.0
+    bep = round(fixed / cm_ratio) if cm_ratio > 0 else 0
+    order_count = sum(1 for d in deals if d.project_status in ORDER_STATUSES)
+    expected = sum(d.expected_sales_amount for d in deals)
+    weighted = sum(
+        round(d.expected_sales_amount * rates.get(d.confidence_rank, 0.0))
+        for d in deals if d.confidence_rank
+    )
+    return {
+        "sales": net,
+        "gross_profit": gross,
+        "gross_rate": gross_rate,
+        "fixed_cost": fixed,
+        "bep": bep,
+        "bep_diff": net - bep,
+        "invoice_total": sum(_invoice_amount(d) for d in deals),
+        "unpaid_total": sum(_unpaid_amount(d) for d in deals),
+        "order_count": order_count,
+        "avg_price": round(net / order_count) if order_count else 0,
+        "expected_sales": expected,
+        "weighted_forecast": weighted,
+        "deal_count": len(deals),
+    }
+
+
+@router.get("/month")
+def month_summary(ym: str, session: Session = Depends(get_session)):
+    """ym = 'YYYY-MM'。当月・前月・前年同月の指標を返す。"""
+    try:
+        year, month = int(ym[:4]), int(ym[5:7])
+    except (ValueError, IndexError):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422, detail="ym は YYYY-MM 形式で指定してください")
+    rates = _rates(session)
+    pm_year, pm_month = (year, month - 1) if month > 1 else (year - 1, 12)
+    cur = _month_metrics(session, year, month, rates)
+    prev_month = _month_metrics(session, pm_year, pm_month, rates)
+    prev_year = _month_metrics(session, year - 1, month, rates)
+    return {
+        "ym": f"{year:04d}-{month:02d}",
+        "current": cur,
+        "prev_month": prev_month,
+        "prev_month_has_data": prev_month["deal_count"] > 0,
+        "prev_year": prev_year,
+        "prev_year_has_data": prev_year["deal_count"] > 0,
     }

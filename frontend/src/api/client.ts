@@ -1,6 +1,7 @@
 import {
   Deal, DealInput, Master, MasterKind,
   MonthlySummary, AnnualSummary, ByRow, PLSummary, Setting, ConfidenceRate,
+  MonthSummary, MonthlyFixedCost,
 } from "./types";
 
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
@@ -79,6 +80,12 @@ export const api = {
   listConfidenceRates: () => req<ConfidenceRate[]>(`/api/confidence-rates`),
   updateConfidenceRate: (rank: string, rate: number) =>
     req<ConfidenceRate>(`/api/confidence-rates/${rank}`, { method: "PUT", body: JSON.stringify({ rate }) }),
+
+  monthSummary: (ym: string) => req<MonthSummary>(`/api/summary/month${qs({ ym })}`),
+  getMonthlyFixedCost: (ym: string) => req<MonthlyFixedCost>(`/api/settings/monthly-fixed-cost/${ym}`),
+  putMonthlyFixedCost: (ym: string, fixed_cost_amount: number, memo?: string | null) =>
+    req<MonthlyFixedCost>(`/api/settings/monthly-fixed-cost/${ym}`,
+      { method: "PUT", body: JSON.stringify({ fixed_cost_amount, memo }) }),
 
   exportUrl: (fy: number) => `/api/export/excel?fiscal_year=${fy}`,
   importExcel: async (file: File, wipe: boolean) => {

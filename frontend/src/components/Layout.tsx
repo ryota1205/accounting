@@ -4,6 +4,7 @@ import { useFiscalYear } from "../context/FiscalYearContext";
 
 const MENU = [
   { to: "/dashboard", label: "ダッシュボード" },
+  { to: "/monthly", label: "月次サマリー" },
   { to: "/deals", label: "案件一覧" },
   { to: "/annual", label: "年間売上管理表" },
   { to: "/summary", label: "軸別集計" },

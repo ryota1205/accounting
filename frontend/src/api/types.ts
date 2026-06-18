@@ -71,6 +71,31 @@ export interface DealInput {
 
 export interface ConfidenceRate { rank: string; rate: number; }
 
+export interface MonthMetrics {
+  sales: number;
+  gross_profit: number;
+  gross_rate: number;
+  fixed_cost: number;
+  bep: number;
+  bep_diff: number;
+  invoice_total: number;
+  unpaid_total: number;
+  order_count: number;
+  avg_price: number;
+  expected_sales: number;
+  weighted_forecast: number;
+  deal_count: number;
+}
+export interface MonthSummary {
+  ym: string;
+  current: MonthMetrics;
+  prev_month: MonthMetrics;
+  prev_month_has_data: boolean;
+  prev_year: MonthMetrics;
+  prev_year_has_data: boolean;
+}
+export interface MonthlyFixedCost { month: string; fixed_cost_amount: number; memo: string | null; }
+
 export interface Master { id: number; name: string; active: boolean; agency?: string | null; }
 export type MasterKind = "clients" | "instructors" | "agencies";
 

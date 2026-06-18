@@ -75,3 +75,11 @@ class ConfidenceRate(SQLModel, table=True):
     rank: str = Field(primary_key=True)   # "A" | "B" | "C"
     rate: float = 0.0
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class MonthlyFixedCost(SQLModel, table=True):
+    """月次の固定費（未設定の月は年度設定の月額をフォールバック）。"""
+    month: str = Field(primary_key=True)   # "YYYY-MM"
+    fixed_cost_amount: int = 0
+    memo: Optional[str] = None
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
