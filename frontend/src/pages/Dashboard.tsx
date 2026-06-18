@@ -43,10 +43,14 @@ export default function Dashboard() {
       <div className="panel">
         <h3>月別売上</h3>
         <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={chartData}>
+          <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 16 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis tickFormatter={(v) => `${v / 10000}万`} />
+            <XAxis dataKey="name" tickMargin={12} />
+            <YAxis
+              domain={[0, 10000000]}
+              ticks={[0, 2000000, 4000000, 6000000, 8000000, 10000000]}
+              tickFormatter={(v) => `${v / 10000}万`}
+            />
             <Tooltip formatter={(v: number) => yen(v)} />
             <Bar dataKey="売上" fill="#2563eb" />
           </BarChart>
