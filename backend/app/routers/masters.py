@@ -32,6 +32,8 @@ def create_master(kind: str, data: MasterIn, session: Session = Depends(get_sess
     if session.exec(select(model).where(model.name == name)).first():
         raise HTTPException(status_code=409, detail="同じ名称が既に存在します")
     row = model(name=name, active=data.active)
+    if model is Client:
+        row.agency = (data.agency or "").strip() or None
     session.add(row)
     session.commit()
     session.refresh(row)
@@ -50,6 +52,8 @@ def update_master(kind: str, row_id: int, data: MasterIn, session: Session = Dep
         raise HTTPException(status_code=409, detail="同じ名称が既に存在します")
     row.name = name
     row.active = data.active
+    if model is Client:
+        row.agency = (data.agency or "").strip() or None
     session.add(row)
     session.commit()
     session.refresh(row)

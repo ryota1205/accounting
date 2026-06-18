@@ -38,7 +38,7 @@ export interface DealInput {
   note?: string | null;
 }
 
-export interface Master { id: number; name: string; active: boolean; }
+export interface Master { id: number; name: string; active: boolean; agency?: string | null; }
 export type MasterKind = "clients" | "instructors" | "agencies";
 
 export interface MonthlySummary {

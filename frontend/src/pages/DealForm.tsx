@@ -98,7 +98,10 @@ export default function DealForm() {
           <MasterField kind="agencies" label="代理店" value={form.agency ?? ""}
             onChange={(v) => set("agency", v)} options={agencies} />
           <MasterField kind="clients" label="企業名" value={form.client} required
-            onChange={(v) => set("client", v)} options={clients} />
+            onChange={(v) => {
+              const c = clients.find((x) => x.name === v);
+              setForm((f) => ({ ...f, client: v, agency: c?.agency ? c.agency : f.agency }));
+            }} options={clients} />
           <div className="field">
             <label>研修名</label>
             <input value={form.training_name ?? ""} onChange={(e) => set("training_name", e.target.value)} />

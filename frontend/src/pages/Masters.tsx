@@ -15,12 +15,14 @@ export default function Masters() {
   const [rows, setRows] = useState<Master[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
+  const [agencyOptions, setAgencyOptions] = useState<Master[]>([]);
 
   function load() {
     setRows(null); setError(null);
     api.listMasters(kind).then(setRows).catch((e) => setError(e.message));
   }
   useEffect(load, [kind]);
+  useEffect(() => { api.listMasters("agencies").then(setAgencyOptions).catch(() => {}); }, [kind]);
 
   async function add() {
     if (!newName.trim()) return;
@@ -29,10 +31,16 @@ export default function Masters() {
   }
   async function rename(m: Master) {
     const name = window.prompt("新しい名称", m.name);
-    if (name && name.trim()) { await api.updateMaster(kind, m.id, name.trim(), m.active); load(); }
+    if (name && name.trim()) { await api.updateMaster(kind, m.id, name.trim(), m.active, m.agency); load(); }
   }
   async function remove(m: Master) {
     if (window.confirm(`「${m.name}」を削除しますか？`)) { await api.deleteMaster(kind, m.id); load(); }
+  }
+  async function saveAgency(m: Master, agency: string) {
+    const v = agency.trim();
+    if ((m.agency ?? "") === v) return;
+    try { await api.updateMaster("clients", m.id, m.name, m.active, v || null); load(); }
+    catch (e) { setError((e as Error).message); }
   }
 
   return (
@@ -54,11 +62,28 @@ export default function Masters() {
           : rows.length === 0 ? <Empty />
           : (
           <table>
-            <thead><tr><th>名称</th><th>状態</th><th></th></tr></thead>
+            <thead>
+              <tr>
+                <th>名称</th>
+                {kind === "clients" && <th>代理店</th>}
+                <th>状態</th><th></th>
+              </tr>
+            </thead>
             <tbody>
               {rows.map((m) => (
                 <tr key={m.id}>
                   <td>{m.name}</td>
+                  {kind === "clients" && (
+                    <td>
+                      <input
+                        list="agencyOptions"
+                        style={{ fontSize: 13, padding: "4px 8px", minWidth: 180 }}
+                        placeholder="代理店を選択/入力"
+                        defaultValue={m.agency ?? ""}
+                        onBlur={(e) => saveAgency(m, e.target.value)}
+                      />
+                    </td>
+                  )}
                   <td>{m.active ? "有効" : "無効"}</td>
                   <td style={{ display: "flex", gap: 6 }}>
                     <button className="btn sub sm" onClick={() => rename(m)}>名称変更</button>
@@ -69,6 +94,9 @@ export default function Masters() {
             </tbody>
           </table>
         )}
+        <datalist id="agencyOptions">
+          {agencyOptions.map((a) => <option key={a.id} value={a.name} />)}
+        </datalist>
       </div>
     </Layout>
   );

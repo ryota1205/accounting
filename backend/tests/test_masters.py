@@ -31,3 +31,17 @@ def test_update_master_duplicate_rejected(client):
     b = client.post("/api/masters/clients", json={"name": "B社"}).json()
     res = client.put(f"/api/masters/clients/{b['id']}", json={"name": "A社", "active": True})
     assert res.status_code == 409
+
+
+def test_client_can_link_agency(client):
+    created = client.post("/api/masters/clients",
+                          json={"name": "紐づけ企業", "agency": "TAC"}).json()
+    assert created["agency"] == "TAC"
+    # 一覧でも代理店が返る
+    listed = client.get("/api/masters/clients").json()
+    row = next(m for m in listed if m["name"] == "紐づけ企業")
+    assert row["agency"] == "TAC"
+    # 更新で代理店を変更
+    upd = client.put(f"/api/masters/clients/{created['id']}",
+                     json={"name": "紐づけ企業", "active": True, "agency": "パーソル総研"}).json()
+    assert upd["agency"] == "パーソル総研"

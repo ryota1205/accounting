@@ -43,10 +43,10 @@ export const api = {
     req<Deal>(`/api/deals/${id}/pay`, { method: "POST", body: JSON.stringify({ paid_on }) }),
 
   listMasters: (kind: MasterKind) => req<Master[]>(`/api/masters/${kind}`),
-  createMaster: (kind: MasterKind, name: string) =>
-    req<Master>(`/api/masters/${kind}`, { method: "POST", body: JSON.stringify({ name }) }),
-  updateMaster: (kind: MasterKind, id: number, name: string, active: boolean) =>
-    req<Master>(`/api/masters/${kind}/${id}`, { method: "PUT", body: JSON.stringify({ name, active }) }),
+  createMaster: (kind: MasterKind, name: string, agency?: string | null) =>
+    req<Master>(`/api/masters/${kind}`, { method: "POST", body: JSON.stringify({ name, agency }) }),
+  updateMaster: (kind: MasterKind, id: number, name: string, active: boolean, agency?: string | null) =>
+    req<Master>(`/api/masters/${kind}/${id}`, { method: "PUT", body: JSON.stringify({ name, active, agency }) }),
   deleteMaster: (kind: MasterKind, id: number) =>
     req<void>(`/api/masters/${kind}/${id}`, { method: "DELETE" }),
 

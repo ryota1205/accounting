@@ -34,3 +34,4 @@ class SettingIn(SQLModel):
 class MasterIn(SQLModel):
     name: str
     active: bool = True
+    agency: Optional[str] = None  # 企業マスタのみ使用（既定代理店）

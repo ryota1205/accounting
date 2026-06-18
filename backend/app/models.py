@@ -30,6 +30,7 @@ class Deal(SQLModel, table=True):
 class Client(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True)
+    agency: Optional[str] = None  # 既定の代理店（マスタで紐づけ）
     active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
