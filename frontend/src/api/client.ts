@@ -10,7 +10,20 @@ async function req<T>(url: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     let detail = `エラー (${res.status})`;
-    try { const b = await res.json(); if (b.detail) detail = b.detail; } catch { /* noop */ }
+    try {
+      const b = await res.json();
+      if (typeof b.detail === "string") {
+        detail = b.detail;
+      } else if (Array.isArray(b.detail)) {
+        // FastAPI/Pydantic のバリデーションエラー配列を読みやすく整形
+        detail = b.detail
+          .map((e: { loc?: (string | number)[]; msg?: string }) =>
+            `${e.loc ? e.loc.filter((x) => x !== "body").join(".") + ": " : ""}${e.msg ?? ""}`)
+          .join(" / ");
+      } else if (b.detail) {
+        detail = JSON.stringify(b.detail);
+      }
+    } catch { /* noop */ }
     throw new Error(detail);
   }
   if (res.status === 204) return undefined as T;

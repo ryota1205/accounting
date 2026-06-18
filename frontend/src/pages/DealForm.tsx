@@ -87,7 +87,18 @@ export default function DealForm() {
     if (!form.held_on) { setError("実施日を入力してください"); return; }
     if (!form.client.trim()) { setError("企業名を入力してください"); return; }
     setSaving(true); setError(null);
-    const payload: DealInput = { ...form };
+    // 空文字の任意項目は null にする（特に日付の "" は 422 になるため）
+    const clean = (v: string | null | undefined) => (v && v.trim() !== "" ? v.trim() : null);
+    const payload: DealInput = {
+      ...form,
+      agency: clean(form.agency),
+      training_name: clean(form.training_name),
+      instructor: clean(form.instructor),
+      support_staff: clean(form.support_staff),
+      note: clean(form.note),
+      payment_due: clean(form.payment_due),
+      revenue_month: clean(form.revenue_month),
+    };
     try {
       if (editing) await api.updateDeal(Number(id), payload);
       else await api.createDeal(payload);
