@@ -157,7 +157,7 @@ export interface AnnualSummary {
 export interface ByRow { name: string; amount: number; instructor_fee: number; share: number; }
 
 export type Role = "admin" | "staff";
-export interface AuthUser { username: string; name: string; role: Role; }
+export interface AuthUser { username: string; name: string; role: Role; must_change_password?: boolean; }
 
 export interface TopClient { name: string; amount: number; share: number; }
 export interface PLSummary {

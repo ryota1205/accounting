@@ -50,6 +50,7 @@ class User(SQLModel, table=True):
     password_hash: str
     salt: str
     role: str = Field(default="staff")               # "admin" | "staff"
+    password_changed: bool = Field(default=False)    # 初期PWから変更済みか
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

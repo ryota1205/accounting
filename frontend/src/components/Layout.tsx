@@ -60,8 +60,9 @@ export function Layout({ title, children, actions }: {
 }) {
   const { fiscalYear, setFiscalYear } = useFiscalYear();
   const { alertCount } = useAlerts();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [pwOpen, setPwOpen] = useState(false);
+  const forcePw = !!user?.must_change_password;
 
   // ロールでメニューを出し分け（空になったグループは隠す）
   const groups = MENU_GROUPS
@@ -113,7 +114,9 @@ export function Layout({ title, children, actions }: {
         </div>
         {children}
       </main>
-      {pwOpen && <PasswordChange onClose={() => setPwOpen(false)} />}
+      {forcePw
+        ? <PasswordChange forced onChanged={refreshUser} />
+        : pwOpen && <PasswordChange onClose={() => setPwOpen(false)} />}
     </div>
   );
 }

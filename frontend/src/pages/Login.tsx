@@ -26,24 +26,24 @@ export default function Login() {
 
   return (
     <div className="login-wrap">
+      <div className="login-aura" aria-hidden="true" />
       <form className="login-card" onSubmit={submit}>
-        <div className="login-brand">
-          <span className="brand-mark">研</span>
-          <span>研修売上管理</span>
+        <div className="login-head">
+          <h1>研修売上管理</h1>
         </div>
-        <div className="field">
+        <div className="login-field">
           <label>ユーザーID</label>
           <input value={username} autoFocus autoComplete="username"
             onChange={(e) => setUsername(e.target.value)} placeholder="admin / staff" />
         </div>
-        <div className="field">
+        <div className="login-field">
           <label>パスワード</label>
           <input type="password" value={password} autoComplete="current-password"
+            placeholder="••••••••"
             onChange={(e) => setPassword(e.target.value)} />
         </div>
         {error && <div className="login-error">{error}</div>}
-        <button className="btn" type="submit" disabled={busy}
-          style={{ width: "100%", marginTop: 4 }}>
+        <button className="login-btn" type="submit" disabled={busy}>
           {busy ? "ログイン中…" : "ログイン"}
         </button>
       </form>

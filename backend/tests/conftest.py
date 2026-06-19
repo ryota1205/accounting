@@ -20,6 +20,15 @@ def _seed_users(session: Session) -> None:
     session.commit()
 
 
+@pytest.fixture(autouse=True)
+def _reset_login_limiter():
+    # 総当たり対策のメモリ状態をテスト間でクリア
+    from app.routers import auth as auth_router
+    auth_router._fails.clear()
+    yield
+    auth_router._fails.clear()
+
+
 @pytest.fixture(name="session")
 def session_fixture():
     engine = create_engine(

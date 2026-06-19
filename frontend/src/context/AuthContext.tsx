@@ -7,6 +7,7 @@ type Ctx = {
   loading: boolean;                       // 起動時のトークン復元中
   login: (username: string, password: string) => Promise<AuthUser>;
   logout: () => void;
+  refreshUser: () => void;                // /me を再取得（パスワード変更後など）
 };
 const AuthContext = createContext<Ctx | null>(null);
 
@@ -36,8 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = "/login";
   };
 
+  const refreshUser = () => { api.me().then(setUser).catch(() => { /* noop */ }); };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

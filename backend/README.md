@@ -42,6 +42,27 @@ curl.exe -F "file=@$f" "http://localhost:8000/api/import/excel?wipe=true"
 - トークンは HMAC 署名（有効7日・ステートレス）。署名鍵は環境変数 `ACCOUNTING_SECRET` を優先し、未設定なら `backend/.secret` を自動生成して再利用（gitignore 済み）。
 - 権限: `admin` は全 API、`staff` は案件(`/api/deals`)・入金(`/api/payments`)・マスタ/確度の参照(GET)のみ。損益/集計/設定/Excel/マスタ書込は admin 限定。
 
+## 外部公開（インターネット）で使う場合のセキュリティ
+外部から使うときは必ず以下を満たすこと。
+
+1. **HTTPS 必須**：HTTP のままだとパスワード/トークンが盗聴され得る。リバースプロキシで TLS 終端する。
+   - 例（Caddy なら自動で Let's Encrypt 証明書取得・更新）。`Caddyfile`:
+     ```
+     your-domain.example.com {
+         handle /api/* {
+             reverse_proxy 127.0.0.1:8000
+         }
+         handle {
+             reverse_proxy 127.0.0.1:5173   # 本番は frontend を build して静的配信を推奨
+         }
+     }
+     ```
+   - Cloudflare Tunnel を使う場合は、Tunnel が TLS を担うのでオリジンは HTTP のままでよい（さらに Cloudflare Access でメール認証ゲートも追加可能）。
+2. **初期パスワードを変更**：`admin1234`/`staff1234` は推測されやすい。初回ログイン後に**変更が強制**される（変更するまで操作不可）。
+3. **署名鍵を固定**：`ACCOUNTING_SECRET`（32文字以上推奨）を環境変数で設定する。未設定だと `backend/.secret` を自動生成。
+4. **総当たり対策**：ログイン5回失敗で15分ロック（実装済み）。
+5. 余力があれば：アクセス元 IP 制限、VPN 内のみ公開、`noindex`（実装済み）。
+
 ## 主なエンドポイント
 - 案件: `GET/POST /api/deals`, `GET/PUT/DELETE /api/deals/{id}`, `POST /api/deals/{id}/pay`
 - マスタ: `GET/POST /api/masters/{clients|instructors|agencies}`, `PUT/DELETE .../{id}`

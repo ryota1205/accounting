@@ -54,6 +54,11 @@ def _run_migrations() -> None:
         if client_cols and "agency" not in client_cols:
             conn.execute(text("ALTER TABLE client ADD COLUMN agency VARCHAR"))
 
+        # user テーブルに password_changed 列を追加（既存DB向け）
+        user_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(user)"))]
+        if user_cols and "password_changed" not in user_cols:
+            conn.execute(text("ALTER TABLE user ADD COLUMN password_changed BOOLEAN DEFAULT 0"))
+
         deal_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(deal)"))]
         if deal_cols:
             for name, ddl in deal_columns.items():
