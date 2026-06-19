@@ -105,7 +105,6 @@ export function Layout({ title, children, actions }: {
             {user && (
               <div className="topbar-user">
                 <span>{user.name}</span>
-                <span className="role-chip">{user.role === "admin" ? "管理者" : "担当者"}</span>
                 <button className="btn sub sm" onClick={() => setPwOpen(true)}>パスワード</button>
                 <button className="btn sub sm" onClick={logout}>ログアウト</button>
               </div>

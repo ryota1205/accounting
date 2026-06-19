@@ -175,3 +175,9 @@ td.num, th.num { text-align: right; }
   display: grid; place-items: center; z-index: 50; padding: 20px; }
 .modal-card { width: 360px; max-width: 100%; background: var(--panel);
   border-radius: 14px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+
+/* 案件一覧：左2列（実施予定・顧客名）を横スクロール時に固定 */
+.deals-grid .stickL { position: sticky; background: var(--panel); z-index: 1; }
+.deals-grid thead .stickL { z-index: 3; }          /* 見出しの固定列は最前面 */
+.deals-grid .stickL0 { left: 0; width: 76px; min-width: 76px; }
+.deals-grid .stickL1 { left: 76px; box-shadow: 1px 0 0 var(--border); } /* 顧客名の右端に区切り線 */

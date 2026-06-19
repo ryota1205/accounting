@@ -149,11 +149,12 @@ export default function Deals() {
           : display.length === 0 ? <Empty />
           : (
           <div ref={scrollRef} className="table-scroll" style={{ maxHeight: maxH }}>
-            <table className="sticky-head">
+            <table className="sticky-head deals-grid">
               <thead>
                 <tr>
-                  {COLS.map((c) => (
-                    <th key={c.key} className={c.align === "num" ? "num" : undefined}
+                  {COLS.map((c, i) => (
+                    <th key={c.key}
+                      className={[c.align === "num" ? "num" : "", i < 2 ? `stickL stickL${i}` : ""].filter(Boolean).join(" ") || undefined}
                       style={{ textAlign: c.align === "center" ? "center" : undefined, cursor: c.sort ? "pointer" : "default", userSelect: "none", whiteSpace: "nowrap" }}
                       onClick={() => c.sort && toggleSort(c.key)}>
                       {c.label}
@@ -167,8 +168,9 @@ export default function Deals() {
               <tbody>
                 {display.map((d) => (
                   <tr key={d.id}>
-                    {COLS.map((c) => (
-                      <td key={c.key} className={c.align === "num" ? "num" : undefined}
+                    {COLS.map((c, i) => (
+                      <td key={c.key}
+                        className={[c.align === "num" ? "num" : "", i < 2 ? `stickL stickL${i}` : ""].filter(Boolean).join(" ") || undefined}
                         style={{ textAlign: c.align === "center" ? "center" : undefined }}>
                         {c.render(d, ctx)}
                       </td>
