@@ -1,0 +1,21 @@
+# Render Blueprint（バックエンド: FastAPI + SQLite）
+# Render ダッシュボードの「New > Blueprint」でこのリポジトリを選ぶと自動構成される。
+# フロント(React)は Vercel 側にデプロイし、VITE_API_BASE にこのサービスのURLを設定する。
+services:
+  - type: web
+    name: accounting-api
+    runtime: python
+    plan: starter            # 永続ディスク利用には有料プランが必要（無料プランは disk 不可）
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: ACCOUNTING_SECRET
+        generateValue: true   # 32文字以上の安全な値を Render が自動生成
+      - key: ACCOUNTING_DB
+        value: sqlite:////var/data/accounting.db   # 永続ディスク上に保存（スラッシュ4本=絶対パス）
+    disk:
+      name: accounting-data
+      mountPath: /var/data
+      sizeGB: 1

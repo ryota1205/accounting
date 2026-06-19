@@ -4,6 +4,13 @@ import {
   MonthSummary, MonthlyFixedCost, SalesFunnel, SalesActivity, Analysis, AuthUser,
 } from "./types";
 
+// ===== API接続先 =====
+// 同一オリジン配信（ローカル開発・同居デプロイ）では空文字＝相対パスのまま。
+// フロントとバックを別ドメインに分ける場合（例: Vercel + Render）は
+// ビルド時に VITE_API_BASE="https://xxx.onrender.com" を設定する。
+const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined)?.replace(/\/$/, "") ?? "";
+const apiUrl = (path: string) => `${API_BASE}${path}`;
+
 // ===== 認証トークン（localStorage） =====
 const TOKEN_KEY = "auth_token";
 export const getToken = () => localStorage.getItem(TOKEN_KEY);
@@ -23,7 +30,7 @@ function handle401(url: string) {
 }
 
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
+  const res = await fetch(apiUrl(url), {
     ...init,
     headers: authHeaders({ "Content-Type": "application/json", ...(init?.headers as Record<string, string> | undefined) }),
   });
@@ -122,9 +129,9 @@ export const api = {
     req<SalesActivity>(`/api/sales-activity/${ym}`,
       { method: "PUT", body: JSON.stringify({ inquiries, first_meetings, memo }) }),
 
-  exportUrl: (fy: number) => `/api/export/excel?fiscal_year=${fy}`,
+  exportUrl: (fy: number) => apiUrl(`/api/export/excel?fiscal_year=${fy}`),
   exportExcel: async (fy: number) => {
-    const res = await fetch(`/api/export/excel?fiscal_year=${fy}`, { headers: authHeaders() });
+    const res = await fetch(apiUrl(`/api/export/excel?fiscal_year=${fy}`), { headers: authHeaders() });
     if (res.status === 401) handle401("/api/export/excel");
     if (!res.ok) throw new Error(`出力に失敗しました (${res.status})`);
     const blob = await res.blob();
@@ -140,7 +147,7 @@ export const api = {
   importExcel: async (file: File, wipe: boolean) => {
     const fd = new FormData();
     fd.append("file", file);
-    const res = await fetch(`/api/import/excel?wipe=${wipe}`,
+    const res = await fetch(apiUrl(`/api/import/excel?wipe=${wipe}`),
       { method: "POST", body: fd, headers: authHeaders() });
     if (res.status === 401) handle401("/api/import/excel");
     if (!res.ok) throw new Error(`取り込みに失敗しました (${res.status})`);
