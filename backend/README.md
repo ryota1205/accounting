@@ -63,6 +63,51 @@ curl.exe -F "file=@$f" "http://localhost:8000/api/import/excel?wipe=true"
 4. **総当たり対策**：ログイン5回失敗で15分ロック（実装済み）。
 5. 余力があれば：アクセス元 IP 制限、VPN 内のみ公開、`noindex`（実装済み）。
 
+## 本番デプロイ（同一サブドメイン・推奨構成）
+フロントとバックを**1つのサブドメイン**の裏で同居させる（同一オリジン＝CORS不要・コード変更不要）。
+例：`accounting.example.com`。
+
+### 1) フロントをビルド（静的ファイル）
+```powershell
+cd frontend
+npm install
+npm run build      # frontend/dist/ に出力
+```
+
+### 2) バックエンドを起動（署名鍵を固定して常駐）
+```powershell
+cd backend
+$env:ACCOUNTING_SECRET = "（32文字以上のランダム文字列）"
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+- DB は `accounting.db`。バックアップ対象にする。
+- 常駐化は Windows なら「タスク スケジューラ」や NSSM 等でサービス化。
+
+### 3) Caddy で HTTPS 終端＋ルーティング（`Caddyfile`）
+```
+accounting.example.com {
+    encode gzip
+
+    # API はバックエンドへ
+    handle /api/* {
+        reverse_proxy 127.0.0.1:8000
+    }
+
+    # それ以外はビルド済みフロントを配信（SPA なので未知パスは index.html へ）
+    handle {
+        root * /path/to/frontend/dist
+        try_files {path} /index.html
+        file_server
+    }
+}
+```
+- Caddy が Let's Encrypt 証明書を**自動取得・自動更新**（DNS の A/AAAA をサーバーに向けておく）。
+- フロントは相対パス `/api/...` を叩くため、ドメインが変わっても**コード変更不要**。
+
+### 4) さらに堅くするなら（任意）
+- **Cloudflare Tunnel + Access**：サーバーを直接公開せず、Cloudflare 側でメール認証ゲートを追加（ログインの手前にもう一枚）。
+- IP 許可リスト（Caddy の `@allowed` matcher 等）。
+
 ## 主なエンドポイント
 - 案件: `GET/POST /api/deals`, `GET/PUT/DELETE /api/deals/{id}`, `POST /api/deals/{id}/pay`
 - マスタ: `GET/POST /api/masters/{clients|instructors|agencies}`, `PUT/DELETE .../{id}`
