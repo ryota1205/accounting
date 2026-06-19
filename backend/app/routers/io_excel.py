@@ -8,8 +8,9 @@ from app.db import get_session
 from app.models import Deal
 from app.service import build_deal, register_masters
 from app.io_parse import parse_deals_sheet
+from app.auth import require_admin
 
-router = APIRouter(prefix="/api", tags=["io"])
+router = APIRouter(prefix="/api", tags=["io"], dependencies=[Depends(require_admin)])
 
 EXPORT_HEADER = ["売上月", "実施日", "代理店", "企業名", "研修名", "講師",
                  "研修費用", "交通費", "その他", "消費税", "請求額", "講師料",

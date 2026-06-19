@@ -7,9 +7,12 @@ from app.db import get_session
 from app.models import Deal
 from datetime import date as date_cls
 from app.schemas import DealIn, PayIn
-from app.service import build_deal, register_masters
+from app.service import build_deal, register_masters, resolve_customer_type
+from app.auth import get_current_user
 
-router = APIRouter(prefix="/api/deals", tags=["deals"])
+# 案件は admin/staff 両方が利用可（認証必須）
+router = APIRouter(prefix="/api/deals", tags=["deals"],
+                   dependencies=[Depends(get_current_user)])
 
 
 def _validate(data: DealIn) -> None:
@@ -57,6 +60,12 @@ def list_deals(
 def create_deal(data: DealIn, session: Session = Depends(get_session)):
     _validate(data)
     deal = build_deal(data)
+    # 顧客区分が未指定なら企業×研修テーマで自動判定（手入力時はその値を尊重）
+    if data.customer_type is None:
+        deal.customer_type = resolve_customer_type(
+            session, client=data.client, training_theme=data.training_theme,
+            training_name=data.training_name, held_on=data.held_on, self_id=None,
+        )
     session.add(deal)
     register_masters(session, client=data.client, instructor=data.instructor, agency=data.agency)
     session.commit()
@@ -79,6 +88,11 @@ def update_deal(deal_id: int, data: DealIn, session: Session = Depends(get_sessi
     if deal is None:
         raise HTTPException(status_code=404, detail="案件が見つかりません")
     build_deal(data, deal)
+    if data.customer_type is None:
+        deal.customer_type = resolve_customer_type(
+            session, client=data.client, training_theme=data.training_theme,
+            training_name=data.training_name, held_on=data.held_on, self_id=deal_id,
+        )
     register_masters(session, client=data.client, instructor=data.instructor, agency=data.agency)
     session.add(deal)
     session.commit()

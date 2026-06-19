@@ -5,8 +5,10 @@ from sqlmodel import Session
 from app.db import get_session
 from app.models import SalesActivity
 from app.schemas import SalesActivityIn
+from app.auth import require_admin
 
-router = APIRouter(prefix="/api/sales-activity", tags=["activity"])
+router = APIRouter(prefix="/api/sales-activity", tags=["activity"],
+                   dependencies=[Depends(require_admin)])
 
 
 @router.get("/{ym}")

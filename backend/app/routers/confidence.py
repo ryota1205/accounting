@@ -5,6 +5,7 @@ from sqlmodel import Session, select
 from app.db import get_session
 from app.models import ConfidenceRate
 from app.schemas import ConfidenceRateIn
+from app.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/api/confidence-rates", tags=["confidence"])
 
@@ -18,13 +19,13 @@ def _ensure_defaults(session: Session) -> None:
     session.commit()
 
 
-@router.get("")
+@router.get("", dependencies=[Depends(get_current_user)])
 def list_rates(session: Session = Depends(get_session)):
     _ensure_defaults(session)
     return session.exec(select(ConfidenceRate).order_by(ConfidenceRate.rank)).all()
 
 
-@router.put("/{rank}")
+@router.put("/{rank}", dependencies=[Depends(require_admin)])
 def update_rate(rank: str, data: ConfidenceRateIn, session: Session = Depends(get_session)):
     if rank not in ("A", "B", "C"):
         raise HTTPException(status_code=404, detail="不明な確度ランクです")

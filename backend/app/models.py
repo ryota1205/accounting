@@ -42,6 +42,18 @@ class Deal(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+class User(SQLModel, table=True):
+    """ログインユーザー。2ロール（admin=全権 / staff=入力担当）。"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(index=True, unique=True)   # ログインID
+    name: str                                        # 表示名
+    password_hash: str
+    salt: str
+    role: str = Field(default="staff")               # "admin" | "staff"
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 class Client(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True)

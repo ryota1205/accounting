@@ -4,8 +4,10 @@ from sqlmodel import Session, select
 
 from app.db import get_session
 from app.models import Deal
+from app.auth import get_current_user
 
-router = APIRouter(prefix="/api/payments", tags=["payments"])
+router = APIRouter(prefix="/api/payments", tags=["payments"],
+                   dependencies=[Depends(get_current_user)])
 
 
 @router.get("")

@@ -57,6 +57,38 @@ def build_deal(data: DealIn, deal: Optional[Deal] = None) -> Deal:
     return deal
 
 
+def _theme_key(theme: Optional[str], name: Optional[str]) -> str:
+    """研修テーマの突合キー。テーマ未設定なら研修名で代用（一覧表示と同じ優先順）。"""
+    return (theme or name or "").strip()
+
+
+def resolve_customer_type(
+    session: Session, *, client: str, training_theme: Optional[str],
+    training_name: Optional[str], held_on, self_id: Optional[int] = None,
+) -> str:
+    """企業×研修テーマで新規/既存/リピートを自動判定。
+    - 新規: その企業名での過去案件がない
+    - リピート: 同じ研修テーマの過去案件がある
+    - 既存: 企業の過去案件はあるが、その研修テーマは初めて
+    「過去」は held_on（同日は id）が手前の案件のみを対象とする。"""
+    cur_theme = _theme_key(training_theme, training_name)
+    others = session.exec(select(Deal).where(Deal.client == client)).all()
+    priors = []
+    for o in others:
+        if self_id is not None and o.id == self_id:
+            continue
+        is_prior = o.held_on < held_on or (
+            o.held_on == held_on and (self_id is None or (o.id is not None and o.id < self_id))
+        )
+        if is_prior:
+            priors.append(o)
+    if not priors:
+        return "新規"
+    if cur_theme and any(_theme_key(o.training_theme, o.training_name) == cur_theme for o in priors):
+        return "リピート"
+    return "既存"
+
+
 def _ensure(session: Session, model, name: Optional[str]) -> None:
     if not name:
         return

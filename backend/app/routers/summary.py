@@ -5,8 +5,10 @@ from sqlmodel import Session, select
 from app.db import get_session
 from app.models import Deal, Setting, MonthlyFixedCost, ConfidenceRate, SalesActivity
 from app import calc
+from app.auth import require_admin
 
-router = APIRouter(prefix="/api/summary", tags=["summary"])
+router = APIRouter(prefix="/api/summary", tags=["summary"],
+                   dependencies=[Depends(require_admin)])
 
 ORDER_STATUSES = {"受注", "実施済", "請求済", "入金済"}
 PROPOSAL_STATUSES = ORDER_STATUSES | {"提案中", "失注"}

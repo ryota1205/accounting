@@ -5,8 +5,10 @@ from sqlmodel import Session
 from app.db import get_session
 from app.models import Setting, MonthlyFixedCost
 from app.schemas import SettingIn, MonthlyFixedCostIn
+from app.auth import require_admin
 
-router = APIRouter(prefix="/api/settings", tags=["settings"])
+router = APIRouter(prefix="/api/settings", tags=["settings"],
+                   dependencies=[Depends(require_admin)])
 
 
 @router.get("/monthly-fixed-cost/{ym}")

@@ -8,3 +8,6 @@ build/
 *.db
 .env
 .DS_Store
+# 認証トークン署名鍵（自動生成・コミットしない）
+.secret
+backend/.secret

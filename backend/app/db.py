@@ -1,5 +1,5 @@
 import os
-from sqlmodel import SQLModel, Session, create_engine
+from sqlmodel import SQLModel, Session, create_engine, select
 from sqlalchemy import text
 
 DATABASE_URL = os.getenv("ACCOUNTING_DB", "sqlite:///./accounting.db")
@@ -11,6 +11,25 @@ def init_db() -> None:
     from app import models  # noqa: F401
     SQLModel.metadata.create_all(engine)
     _run_migrations()
+    _seed_users()
+
+
+def _seed_users() -> None:
+    """初期2アカウント（存在しなければ作成）。初期PWは README 記載・変更前提。"""
+    from app.models import User
+    from app import auth
+    seeds = [
+        # (username, name, role, 初期パスワード)
+        ("admin", "管理者", "admin", "admin1234"),
+        ("staff", "担当者", "staff", "staff1234"),
+    ]
+    with Session(engine) as session:
+        for username, name, role, pw in seeds:
+            if session.exec(select(User).where(User.username == username)).first() is None:
+                h, salt = auth.hash_password(pw)
+                session.add(User(username=username, name=name, role=role,
+                                 password_hash=h, salt=salt))
+        session.commit()
 
 
 def _run_migrations() -> None:

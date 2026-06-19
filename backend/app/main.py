@@ -27,9 +27,10 @@ def health():
 
 
 from app.routers import (
-    deals, masters, settings, summary, payments, io_excel, confidence, activity,
+    deals, masters, settings, summary, payments, io_excel, confidence, activity, auth,
 )
 
+app.include_router(auth.router)
 app.include_router(deals.router)
 app.include_router(masters.router)
 app.include_router(settings.router)

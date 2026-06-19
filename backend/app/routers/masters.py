@@ -4,6 +4,7 @@ from sqlmodel import Session, select
 from app.db import get_session
 from app.models import Client, Instructor, Agency
 from app.schemas import MasterIn
+from app.auth import get_current_user, require_admin
 
 router = APIRouter(prefix="/api/masters", tags=["masters"])
 
@@ -17,13 +18,13 @@ def _model(kind: str):
     return model
 
 
-@router.get("/{kind}")
+@router.get("/{kind}", dependencies=[Depends(get_current_user)])
 def list_master(kind: str, session: Session = Depends(get_session)):
     model = _model(kind)
     return session.exec(select(model).order_by(model.name)).all()
 
 
-@router.post("/{kind}", status_code=201)
+@router.post("/{kind}", status_code=201, dependencies=[Depends(require_admin)])
 def create_master(kind: str, data: MasterIn, session: Session = Depends(get_session)):
     model = _model(kind)
     name = data.name.strip()
@@ -40,7 +41,7 @@ def create_master(kind: str, data: MasterIn, session: Session = Depends(get_sess
     return row
 
 
-@router.put("/{kind}/{row_id}")
+@router.put("/{kind}/{row_id}", dependencies=[Depends(require_admin)])
 def update_master(kind: str, row_id: int, data: MasterIn, session: Session = Depends(get_session)):
     model = _model(kind)
     row = session.get(model, row_id)
@@ -60,7 +61,7 @@ def update_master(kind: str, row_id: int, data: MasterIn, session: Session = Dep
     return row
 
 
-@router.delete("/{kind}/{row_id}", status_code=204)
+@router.delete("/{kind}/{row_id}", status_code=204, dependencies=[Depends(require_admin)])
 def delete_master(kind: str, row_id: int, session: Session = Depends(get_session)):
     model = _model(kind)
     row = session.get(model, row_id)
