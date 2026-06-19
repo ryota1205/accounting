@@ -27,7 +27,7 @@ export default function AnnualMatrix() {
 
   return (
     <Layout title="年間売上管理表">
-      <div className="panel matrix">
+      <div className="panel matrix flush">
         <table>
           <thead>
             <tr>

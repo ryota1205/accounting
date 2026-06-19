@@ -43,7 +43,12 @@ export default function ImportExport() {
       <div className="panel">
         <h3>出力（システム → Excel）</h3>
         <p className="hint">{fiscalYear}年度の案件をExcelで書き出します。</p>
-        <a className="btn" href={api.exportUrl(fiscalYear)}>Excelをダウンロード</a>
+        <button className="btn" disabled={busy} onClick={async () => {
+          setBusy(true); setMsg("");
+          try { await api.exportExcel(fiscalYear); }
+          catch (e) { setMsg(`エラー: ${(e as Error).message}`); }
+          finally { setBusy(false); }
+        }}>Excelをダウンロード</button>
       </div>
     </Layout>
   );

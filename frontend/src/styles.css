@@ -8,10 +8,44 @@ body { margin: 0; font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, 
   background: var(--bg); color: var(--text); }
 a { color: inherit; text-decoration: none; }
 .app { display: flex; min-height: 100vh; }
-.side { flex: 0 0 220px; width: 220px; background: #0f172a; color: #cbd5e1; padding: 16px 0; }
-.side h1 { font-size: 15px; color: #fff; padding: 0 18px 12px; margin: 0; }
-.side nav a { display: block; padding: 10px 18px; font-size: 14px; }
-.side nav a.active, .side nav a:hover { background: #1e293b; color: #fff; }
+.side { flex: 0 0 232px; width: 232px; color: #cbd5e1; padding: 22px 14px;
+  background: linear-gradient(180deg, #111c33 0%, #0b1424 100%);
+  border-right: 1px solid rgba(255,255,255,.06); }
+/* ブランド（タイトル）エリア */
+.side .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px; }
+.side .brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--primary), #60a5fa); color: #fff;
+  font-size: 15px; font-weight: 700; box-shadow: 0 4px 12px rgba(37,99,235,.35); }
+.side .brand-text { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: .04em; }
+/* タイトルとメニューの間隔を広げる */
+.side nav { display: flex; flex-direction: column; margin-top: 34px;
+  padding-top: 18px; border-top: 1px solid rgba(255,255,255,.06); }
+/* メニューのグループ分け */
+.side .nav-group { display: flex; flex-direction: column; gap: 3px; }
+.side .nav-group + .nav-group { margin-top: 18px; }
+.side .nav-group-title { font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  color: #64748b; padding: 0 12px 5px; }
+/* LINE風の赤バッジ（未入金アラート件数） */
+.side .nav-badge { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--danger); color: #fff; font-size: 11px; font-weight: 700;
+  line-height: 1; border-radius: 999px; box-shadow: 0 0 0 2px rgba(220,38,38,.25); }
+/* ダッシュボード最上部の赤枠アラートバナー */
+.alert-banner { display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+  padding: 12px 16px; border: 1.5px solid var(--danger); border-radius: 12px;
+  background: #fef2f2; color: var(--danger); font-size: 14px; }
+.alert-banner:hover { background: #fee2e2; }
+.alert-banner-icon { flex: 0 0 22px; width: 22px; height: 22px; display: grid; place-items: center;
+  background: var(--danger); color: #fff; border-radius: 999px; font-weight: 700; font-size: 14px; }
+.alert-banner-cta { margin-left: auto; font-weight: 700; white-space: nowrap; }
+.side nav a { display: flex; align-items: center; gap: 11px; padding: 10px 12px;
+  font-size: 14px; border-radius: 10px; color: #aeb9ca;
+  transition: background .15s ease, color .15s ease; }
+.side nav a .nav-ico { flex: 0 0 18px; opacity: .85; transition: opacity .15s ease; }
+.side nav a:hover { background: rgba(255,255,255,.06); color: #fff; }
+.side nav a.active { background: linear-gradient(135deg, var(--primary), var(--primary-d));
+  color: #fff; box-shadow: 0 6px 16px rgba(37,99,235,.35); }
+.side nav a.active .nav-ico { opacity: 1; }
 .main { flex: 1; min-width: 0; padding: 20px 28px; }
 .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .topbar h2 { margin: 0; font-size: 20px; }
@@ -27,6 +61,8 @@ select, input, textarea { font: inherit; padding: 8px 10px; border: 1px solid va
 .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
 .card .label { color: var(--muted); font-size: 13px; }
 .card .value { font-size: 22px; font-weight: 700; margin-top: 6px; }
+/* 値の下の補足テキスト（前年比・「売上実績−損益分岐点」等）は小さめに */
+.card .value ~ .label { font-size: 11px; margin-top: 8px; }
 .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
   padding: 16px; margin-top: 18px; }
 .panel h3 { margin: 0 0 12px; font-size: 15px; }
@@ -57,6 +93,28 @@ td.num, th.num { text-align: right; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
 .req::after { content: " *"; color: var(--danger); }
 .matrix { overflow-x: auto; }
+/* 軸別集計：数値列は固定幅で軸間そろえ、軸名列を可変にして横幅いっぱいに広げる */
+.by table { table-layout: fixed; width: 100%; }
+.by col.c-name { width: auto; }
+.by col.c-num { width: 180px; }
+.by col.c-share { width: 140px; }
+.by td:first-child { white-space: normal; overflow-wrap: anywhere; }
+/* 年間売上管理表(.flush)専用：高さ制限で横スクロールバーを画面内に常時表示し、
+   見出し行と企業名列を固定。パネル余白は0で端に密着させる（他の.matrixには影響させない） */
+.flush { overflow: auto; max-height: calc(100vh - 150px); padding: 0; }
+.flush table { border-collapse: separate; border-spacing: 0; }
+.flush th, .flush td { border-bottom: 1px solid var(--border); }
+/* 見出し2行を上部に固定 */
+.flush thead th { position: sticky; top: 0; z-index: 2; background: var(--panel); }
+.flush thead tr:nth-child(2) th { top: 37px; z-index: 2; }
+/* 企業名列（左端）を固定 */
+.flush th:first-child, .flush td:first-child {
+  position: sticky; left: 0; z-index: 1; background: var(--panel);
+  box-shadow: 1px 0 0 var(--border);
+}
+/* 左上の角（見出し×企業名）は最前面 */
+.flush thead th:first-child { z-index: 3; }
+.flush tbody td:first-child { font-weight: 600; }
 /* 高さ制限つきスクロール領域（横スクロールバーを画面内に常時表示） */
 .table-scroll { overflow: auto; }
 .table-scroll table { margin: 0; }
@@ -67,3 +125,26 @@ td.num, th.num { text-align: right; }
 }
 .cell-wrap { white-space: normal; overflow-wrap: anywhere; }
 .dealform input, .dealform select, .dealform textarea { font-size: 13px; }
+
+/* ===== ログイン画面 ===== */
+.login-wrap { min-height: 100vh; display: grid; place-items: center;
+  background: linear-gradient(180deg, #0f1b30 0%, #0b1424 100%); padding: 20px; }
+.login-card { width: 340px; max-width: 100%; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.35); display: flex; flex-direction: column; gap: 4px; }
+.login-brand { display: flex; align-items: center; gap: 10px; justify-content: center;
+  font-size: 18px; font-weight: 700; margin-bottom: 14px; }
+.login-brand .brand-mark { width: 32px; height: 32px; display: grid; place-items: center;
+  border-radius: 9px; background: linear-gradient(135deg, var(--primary), #60a5fa);
+  color: #fff; font-size: 16px; box-shadow: 0 4px 12px rgba(37,99,235,.35); }
+.login-error { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca;
+  border-radius: 8px; padding: 8px 10px; font-size: 13px; margin: 6px 0; }
+/* トップバーのユーザー表示・ログアウト */
+.topbar-user { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.topbar-user .role-chip { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px;
+  background: #eef2ff; color: var(--primary-d); }
+/* モーダル（パスワード変更） */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.45);
+  display: grid; place-items: center; z-index: 50; padding: 20px; }
+.modal-card { width: 360px; max-width: 100%; background: var(--panel);
+  border-radius: 14px; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,.35); }

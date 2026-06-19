@@ -63,22 +63,28 @@ export default function MonthlySummary() {
   const py = data.prev_year;
   const hasPY = data.prev_year_has_data;
 
+  // 前年比：プラスは緑、マイナスは赤、増減なしはグレー
+  const yoyStyle = (n: number) => ({
+    color: n > 0 ? "var(--ok)" : n < 0 ? "var(--danger)" : undefined,
+    fontWeight: n !== 0 ? 600 : undefined,
+  });
+
   const yoyAmount = (cur: number, prev: number): ReactNode => {
     if (!hasPY) return <div className="label">前年データなし</div>;
     const diff = cur - prev;
     const ratio = prev !== 0 ? `${(cur / prev * 100).toFixed(1)}%` : "—";
-    return <div className="label">前年比 {ratio} / 前年差 {diff >= 0 ? "+" : ""}{yen(diff)}</div>;
+    return <div className="label" style={yoyStyle(diff)}>前年比 {ratio}<br />前年差 {diff >= 0 ? "+" : ""}{yen(diff)}</div>;
   };
   const yoyCount = (cur: number, prev: number): ReactNode => {
     if (!hasPY) return <div className="label">前年データなし</div>;
     const diff = cur - prev;
     const ratio = prev !== 0 ? `${(cur / prev * 100).toFixed(1)}%` : "—";
-    return <div className="label">前年比 {ratio} / 前年差 {diff >= 0 ? "+" : ""}{diff}件</div>;
+    return <div className="label" style={yoyStyle(diff)}>前年比 {ratio}<br />前年差 {diff >= 0 ? "+" : ""}{diff}件</div>;
   };
   const yoyRate = (cur: number, prev: number): ReactNode => {
     if (!hasPY) return <div className="label">前年データなし</div>;
     const ptv = (cur - prev) * 100;
-    return <div className="label">前年差 {ptv >= 0 ? "+" : ""}{ptv.toFixed(1)}pt</div>;
+    return <div className="label" style={yoyStyle(ptv)}>前年差 {ptv >= 0 ? "+" : ""}{ptv.toFixed(1)}pt</div>;
   };
 
   // 入金アラート（現在・今日基準、年度内の案件）

@@ -72,6 +72,11 @@ export default function Analysis() {
 
   const y = data.yoy;
   const ratio = (cur: number, prev: number) => (prev !== 0 ? `${(cur / prev * 100).toFixed(1)}%` : "—");
+  // 前年比：前年以上(100%以上)は緑、前年未満(マイナス)は赤。両方0(データなし)は中立
+  const yoyColor = (cur: number, prev: number) =>
+    cur === 0 && prev === 0
+      ? undefined
+      : { color: cur >= prev ? "var(--ok)" : "var(--danger)", fontWeight: 600 };
 
   return (
     <Layout title="分析">
@@ -83,11 +88,17 @@ export default function Analysis() {
         <Card label="年度売上(税抜)合計" value={yen(data.dependency.total)} />
       </div>
 
-      <h3 style={{ margin: "18px 0 8px" }}>新規／既存／リピート別</h3>
+      <h3 style={{ margin: "18px 0 8px" }}>新規／既存／リピート別（売上構成比）</h3>
       <div className="cards">
-        {data.by_customer_type.map((r) => (
-          <Card key={r.type} label={r.type} value={yen(r.sales)} sub={`構成比 ${pct(r.share)}`} />
-        ))}
+        {(() => {
+          const order = ["新規", "既存", "リピート"];
+          const map = new Map(data.by_customer_type.map((r) => [r.type, r]));
+          const extras = data.by_customer_type.filter((r) => !order.includes(r.type)).map((r) => r.type);
+          return [...order, ...extras].map((t) => {
+            const r = map.get(t);
+            return <Card key={t} label={t} value={pct(r?.share ?? 0)} sub={yen(r?.sales ?? 0)} />;
+          });
+        })()}
       </div>
 
       <GroupTable title="顧客別" rows={data.by_client} firstColLabel="顧客名" />
@@ -109,23 +120,23 @@ export default function Analysis() {
             {y.labels.map((l, i) => (
               <tr key={l}>
                 <td>{l}</td>
-                <td className="num">{yen(y.sales_cur[i])}</td>
+                <td className="num" style={yoyColor(y.sales_cur[i], y.sales_prev[i])}>{yen(y.sales_cur[i])}</td>
                 <td className="num">{yen(y.sales_prev[i])}</td>
-                <td className="num">{ratio(y.sales_cur[i], y.sales_prev[i])}</td>
-                <td className="num">{yen(y.gross_cur[i])}</td>
+                <td className="num" style={yoyColor(y.sales_cur[i], y.sales_prev[i])}>{ratio(y.sales_cur[i], y.sales_prev[i])}</td>
+                <td className="num" style={yoyColor(y.gross_cur[i], y.gross_prev[i])}>{yen(y.gross_cur[i])}</td>
                 <td className="num">{yen(y.gross_prev[i])}</td>
-                <td className="num">{y.orders_cur[i]}</td>
+                <td className="num" style={yoyColor(y.orders_cur[i], y.orders_prev[i])}>{y.orders_cur[i]}</td>
                 <td className="num">{y.orders_prev[i]}</td>
               </tr>
             ))}
             <tr>
               <td><strong>年間累計</strong></td>
-              <td className="num"><strong>{yen(y.total_sales_cur)}</strong></td>
+              <td className="num" style={yoyColor(y.total_sales_cur, y.total_sales_prev)}><strong>{yen(y.total_sales_cur)}</strong></td>
               <td className="num"><strong>{yen(y.total_sales_prev)}</strong></td>
-              <td className="num"><strong>{ratio(y.total_sales_cur, y.total_sales_prev)}</strong></td>
-              <td className="num"><strong>{yen(y.total_gross_cur)}</strong></td>
+              <td className="num" style={yoyColor(y.total_sales_cur, y.total_sales_prev)}><strong>{ratio(y.total_sales_cur, y.total_sales_prev)}</strong></td>
+              <td className="num" style={yoyColor(y.total_gross_cur, y.total_gross_prev)}><strong>{yen(y.total_gross_cur)}</strong></td>
               <td className="num"><strong>{yen(y.total_gross_prev)}</strong></td>
-              <td className="num"><strong>{y.total_orders_cur}</strong></td>
+              <td className="num" style={yoyColor(y.total_orders_cur, y.total_orders_prev)}><strong>{y.total_orders_cur}</strong></td>
               <td className="num"><strong>{y.total_orders_prev}</strong></td>
             </tr>
           </tbody>

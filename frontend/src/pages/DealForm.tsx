@@ -75,6 +75,8 @@ export default function DealForm() {
   const [loading, setLoading] = useState(editing);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // 詳細項目の開閉（新規は閉じてシンプルに、編集は既存データが見えるよう開く）
+  const [showDetails, setShowDetails] = useState(editing);
 
   useEffect(() => {
     api.listMasters("clients").then(setClients).catch(() => {});
@@ -149,106 +151,121 @@ export default function DealForm() {
     <Layout title={editing ? "案件編集" : "案件登録"}>
       {error && <ErrorState message={error} />}
       <form className="panel dealform" onSubmit={submit}>
-        <h3>案件情報</h3>
+        <h3>基本情報</h3>
         <div className="form-grid">
           <MasterField kind="clients" label="顧客名（企業名）" value={form.client} required
             onChange={(v) => {
               const c = clients.find((x) => x.name === v);
               setForm((f) => ({ ...f, client: v, agency: c?.agency ? c.agency : f.agency }));
             }} options={clients} />
-          <MasterField kind="agencies" label="代理店" value={form.agency ?? ""}
-            onChange={(v) => set("agency", v)} options={agencies} />
-          <div className="field">
-            <label>案件名</label>
-            <input value={form.project_name ?? ""} onChange={(e) => set("project_name", e.target.value)} />
-          </div>
           <div className="field">
             <label>研修テーマ</label>
             <input value={form.training_theme ?? ""} onChange={(e) => set("training_theme", e.target.value)} />
           </div>
-          <div className="field">
-            <label>研修名</label>
-            <input value={form.training_name ?? ""} onChange={(e) => set("training_name", e.target.value)} />
-          </div>
           <MasterField kind="instructors" label="講師" value={form.instructor ?? ""}
             onChange={(v) => set("instructor", v)} options={instructors} />
-          <div className="field">
-            <label>サポートスタッフ</label>
-            <input value={form.support_staff ?? ""} onChange={(e) => set("support_staff", e.target.value)} />
-          </div>
-          <div className="field">
-            <label>新規／既存／リピート</label>
-            <select value={form.customer_type ?? ""}
-              onChange={(e) => set("customer_type", e.target.value || null)}>
-              <option value="">（未設定）</option>
-              {CUSTOMER_TYPES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-        </div>
-
-        <h3 style={{ marginTop: 18 }}>金額（入力）</h3>
-        <div className="form-grid">
+          <div className="field"><label className="req">実施予定日</label>
+            <input type="date" value={form.held_on} onChange={(e) => set("held_on", e.target.value)} /></div>
           <div className="field"><label>研修費用</label>
             <MoneyInput value={form.fee} onChange={(n) => set("fee", n)} /></div>
-          <div className="field"><label>交通費</label>
-            <MoneyInput value={form.transport} onChange={(n) => set("transport", n)} /></div>
-          <div className="field"><label>その他</label>
-            <MoneyInput value={form.other} onChange={(n) => set("other", n)} /></div>
-          <div className="field"><label>直接原価</label>
-            <MoneyInputN value={form.direct_cost} onChange={(n) => set("direct_cost", n)}
-              placeholder="未設定=講師料を使用" />
-            <span className="hint">未入力なら講師料を原価として使用</span></div>
           <div className="field"><label>講師料</label>
             <MoneyInput value={form.instructor_fee} onChange={(n) => set("instructor_fee", n)} /></div>
-          <div className="field"><label>固定費配賦額</label>
-            <MoneyInput value={form.allocated_fixed_cost} onChange={(n) => set("allocated_fixed_cost", n)} /></div>
-          <div className="field"><label>見込み売上</label>
-            <MoneyInput value={form.expected_sales_amount} onChange={(n) => set("expected_sales_amount", n)} /></div>
-        </div>
-
-        <h3 style={{ marginTop: 18 }}>ステータス・受注確度</h3>
-        <div className="form-grid">
           <div className="field"><label>案件ステータス</label>
             <select value={form.project_status} onChange={(e) => set("project_status", e.target.value)}>
               {PROJECT_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select></div>
-          <div className="field"><label>受注確度</label>
-            <select value={form.confidence_rank ?? ""}
-              onChange={(e) => set("confidence_rank", (e.target.value || null))}>
-              <option value="">（未設定）</option>
-              {CONFIDENCE_RANKS.map((r) => (
-                <option key={r} value={r}>{r}（{Math.round((rates[r] ?? 0) * 100)}%）</option>
-              ))}
-            </select></div>
-          <div className="field"><label>失注理由</label>
-            <input value={form.lost_reason ?? ""} onChange={(e) => set("lost_reason", e.target.value)} /></div>
         </div>
 
-        <h3 style={{ marginTop: 18 }}>日程・入金</h3>
-        <div className="form-grid">
-          <div className="field"><label className="req">実施予定日</label>
-            <input type="date" value={form.held_on} onChange={(e) => set("held_on", e.target.value)} /></div>
-          <div className="field"><label>請求日</label>
-            <input type="date" value={form.invoice_date ?? ""} onChange={(e) => set("invoice_date", e.target.value)} /></div>
-          <div className="field"><label>入金予定日</label>
-            <input type="date" value={form.payment_due ?? ""} onChange={(e) => set("payment_due", e.target.value)} /></div>
-          <div className="field"><label>入金日</label>
-            <input type="date" value={form.paid_on ?? ""} onChange={(e) => set("paid_on", e.target.value)} /></div>
-          <div className="field"><label>入金ステータス</label>
-            <select value={form.payment_status}
-              onChange={(e) => set("payment_status", e.target.value as PaymentStatus)}>
-              {PAYMENT_STATUS_OPTIONS.map((s) => (
-                <option key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</option>
-              ))}
-            </select></div>
-          <div className="field"><label>請求金額</label>
-            <MoneyInputN value={form.invoice_amount} onChange={(n) => set("invoice_amount", n)}
-              placeholder="未設定=請求額を使用" /></div>
-          <div className="field"><label>入金済金額</label>
-            <MoneyInput value={form.paid_amount} onChange={(n) => set("paid_amount", n)} /></div>
-          <div className="field"><label>備考</label>
-            <input value={form.note ?? ""} onChange={(e) => set("note", e.target.value)} /></div>
+        <div style={{ marginTop: 14 }}>
+          <button type="button" className="btn sub sm" onClick={() => setShowDetails((v) => !v)}>
+            {showDetails ? "詳細を閉じる ▴" : "詳細を入力 ▾"}
+          </button>
         </div>
+
+        {showDetails && (
+          <>
+            <h3 style={{ marginTop: 18 }}>案件情報（詳細）</h3>
+            <div className="form-grid">
+              <MasterField kind="agencies" label="代理店" value={form.agency ?? ""}
+                onChange={(v) => set("agency", v)} options={agencies} />
+              <div className="field">
+                <label>案件名</label>
+                <input value={form.project_name ?? ""} onChange={(e) => set("project_name", e.target.value)} />
+              </div>
+              <div className="field">
+                <label>研修名</label>
+                <input value={form.training_name ?? ""} onChange={(e) => set("training_name", e.target.value)} />
+              </div>
+              <div className="field">
+                <label>サポートスタッフ</label>
+                <input value={form.support_staff ?? ""} onChange={(e) => set("support_staff", e.target.value)} />
+              </div>
+              <div className="field">
+                <label>新規／既存／リピート</label>
+                <select value={form.customer_type ?? ""}
+                  onChange={(e) => set("customer_type", e.target.value || null)}>
+                  <option value="">（未設定＝自動判定）</option>
+                  {CUSTOMER_TYPES.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <span className="hint">未設定なら保存時に企業×研修テーマで自動判定（新規/既存/リピート）。手動選択時はその値を優先。</span>
+              </div>
+            </div>
+
+            <h3 style={{ marginTop: 18 }}>金額（詳細）</h3>
+            <div className="form-grid">
+              <div className="field"><label>交通費</label>
+                <MoneyInput value={form.transport} onChange={(n) => set("transport", n)} /></div>
+              <div className="field"><label>その他</label>
+                <MoneyInput value={form.other} onChange={(n) => set("other", n)} /></div>
+              <div className="field"><label>直接原価</label>
+                <MoneyInputN value={form.direct_cost} onChange={(n) => set("direct_cost", n)}
+                  placeholder="未設定=講師料を使用" />
+                <span className="hint">未入力なら講師料を原価として使用</span></div>
+              <div className="field"><label>固定費配賦額</label>
+                <MoneyInput value={form.allocated_fixed_cost} onChange={(n) => set("allocated_fixed_cost", n)} /></div>
+              <div className="field"><label>見込み売上</label>
+                <MoneyInput value={form.expected_sales_amount} onChange={(n) => set("expected_sales_amount", n)} /></div>
+            </div>
+
+            <h3 style={{ marginTop: 18 }}>受注確度</h3>
+            <div className="form-grid">
+              <div className="field"><label>受注確度</label>
+                <select value={form.confidence_rank ?? ""}
+                  onChange={(e) => set("confidence_rank", (e.target.value || null))}>
+                  <option value="">（未設定）</option>
+                  {CONFIDENCE_RANKS.map((r) => (
+                    <option key={r} value={r}>{r}（{Math.round((rates[r] ?? 0) * 100)}%）</option>
+                  ))}
+                </select></div>
+              <div className="field"><label>失注理由</label>
+                <input value={form.lost_reason ?? ""} onChange={(e) => set("lost_reason", e.target.value)} /></div>
+            </div>
+
+            <h3 style={{ marginTop: 18 }}>日程・入金</h3>
+            <div className="form-grid">
+              <div className="field"><label>請求日</label>
+                <input type="date" value={form.invoice_date ?? ""} onChange={(e) => set("invoice_date", e.target.value)} /></div>
+              <div className="field"><label>入金予定日</label>
+                <input type="date" value={form.payment_due ?? ""} onChange={(e) => set("payment_due", e.target.value)} /></div>
+              <div className="field"><label>入金日</label>
+                <input type="date" value={form.paid_on ?? ""} onChange={(e) => set("paid_on", e.target.value)} /></div>
+              <div className="field"><label>入金ステータス</label>
+                <select value={form.payment_status}
+                  onChange={(e) => set("payment_status", e.target.value as PaymentStatus)}>
+                  {PAYMENT_STATUS_OPTIONS.map((s) => (
+                    <option key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</option>
+                  ))}
+                </select></div>
+              <div className="field"><label>請求金額</label>
+                <MoneyInputN value={form.invoice_amount} onChange={(n) => set("invoice_amount", n)}
+                  placeholder="未設定=請求額を使用" /></div>
+              <div className="field"><label>入金済金額</label>
+                <MoneyInput value={form.paid_amount} onChange={(n) => set("paid_amount", n)} /></div>
+              <div className="field"><label>備考</label>
+                <input value={form.note ?? ""} onChange={(e) => set("note", e.target.value)} /></div>
+            </div>
+          </>
+        )}
 
         <h3 style={{ marginTop: 18 }}>自動計算</h3>
         <div className="cards">

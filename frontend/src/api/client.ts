@@ -1,14 +1,33 @@
 import {
   Deal, DealInput, Master, MasterKind,
   MonthlySummary, AnnualSummary, ByRow, PLSummary, Setting, ConfidenceRate,
-  MonthSummary, MonthlyFixedCost, SalesFunnel, SalesActivity, Analysis,
+  MonthSummary, MonthlyFixedCost, SalesFunnel, SalesActivity, Analysis, AuthUser,
 } from "./types";
+
+// ===== 認証トークン（localStorage） =====
+const TOKEN_KEY = "auth_token";
+export const getToken = () => localStorage.getItem(TOKEN_KEY);
+export const setToken = (t: string) => localStorage.setItem(TOKEN_KEY, t);
+export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+function authHeaders(base: Record<string, string> = {}): Record<string, string> {
+  const t = getToken();
+  return t ? { ...base, Authorization: `Bearer ${t}` } : base;
+}
+
+// 401（未認証・期限切れ）を共通処理：トークン破棄してログインへ
+function handle401(url: string) {
+  if (url.includes("/api/auth/login")) return; // ログイン失敗はそのままエラー表示
+  clearToken();
+  if (!location.pathname.startsWith("/login")) location.href = "/login";
+}
 
 async function req<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
     ...init,
+    headers: authHeaders({ "Content-Type": "application/json", ...(init?.headers as Record<string, string> | undefined) }),
   });
+  if (res.status === 401) handle401(url);
   if (!res.ok) {
     let detail = `エラー (${res.status})`;
     try {
@@ -47,6 +66,15 @@ function qs(params: Record<string, unknown>): string {
 }
 
 export const api = {
+  // ===== 認証 =====
+  login: (username: string, password: string) =>
+    req<{ token: string; user: AuthUser }>("/api/auth/login",
+      { method: "POST", body: JSON.stringify({ username, password }) }),
+  me: () => req<AuthUser>("/api/auth/me"),
+  changePassword: (current_password: string, new_password: string) =>
+    req<{ ok: boolean }>("/api/auth/change-password",
+      { method: "POST", body: JSON.stringify({ current_password, new_password }) }),
+
   listDeals: (f: DealFilter) => req<Deal[]>(`/api/deals${qs(f)}`),
   getDeal: (id: number) => req<Deal>(`/api/deals/${id}`),
   createDeal: (d: DealInput) => req<Deal>("/api/deals", { method: "POST", body: JSON.stringify(d) }),
@@ -95,10 +123,26 @@ export const api = {
       { method: "PUT", body: JSON.stringify({ inquiries, first_meetings, memo }) }),
 
   exportUrl: (fy: number) => `/api/export/excel?fiscal_year=${fy}`,
+  exportExcel: async (fy: number) => {
+    const res = await fetch(`/api/export/excel?fiscal_year=${fy}`, { headers: authHeaders() });
+    if (res.status === 401) handle401("/api/export/excel");
+    if (!res.ok) throw new Error(`出力に失敗しました (${res.status})`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `研修売上管理_${fy}年度.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
   importExcel: async (file: File, wipe: boolean) => {
     const fd = new FormData();
     fd.append("file", file);
-    const res = await fetch(`/api/import/excel?wipe=${wipe}`, { method: "POST", body: fd });
+    const res = await fetch(`/api/import/excel?wipe=${wipe}`,
+      { method: "POST", body: fd, headers: authHeaders() });
+    if (res.status === 401) handle401("/api/import/excel");
     if (!res.ok) throw new Error(`取り込みに失敗しました (${res.status})`);
     return res.json() as Promise<{ imported: number }>;
   },

@@ -22,8 +22,8 @@ type Col = {
 const mmdd = (s: string | null) => (s ? s.slice(5) : "—");
 
 const COLS: Col[] = [
+  { key: "held_on", label: "実施予定", align: "center", render: (d) => mmdd(d.held_on), sort: (d) => d.held_on },
   { key: "client", label: "顧客名", render: (d) => d.client, sort: (d) => d.client },
-  { key: "project_name", label: "案件名", render: (d) => d.project_name ?? "—", sort: (d) => d.project_name ?? "" },
   { key: "training_theme", label: "研修テーマ", render: (d) => d.training_theme ?? d.training_name ?? "—", sort: (d) => d.training_theme ?? "" },
   { key: "sales", label: "売上(税抜)", align: "num", render: (d) => yen(salesAmount(d)), sort: (d) => salesAmount(d) },
   { key: "gross", label: "粗利", align: "num", render: (d) => yen(grossProfit(d)), sort: (d) => grossProfit(d) },
@@ -38,7 +38,6 @@ const COLS: Col[] = [
   { key: "invoice", label: "請求金額", align: "num", render: (d) => yen(invoiceAmount(d)), sort: (d) => invoiceAmount(d) },
   { key: "paid", label: "入金済", align: "num", render: (d) => yen(d.paid_amount), sort: (d) => d.paid_amount },
   { key: "unpaid", label: "未入金", align: "num", render: (d) => yen(unpaidAmount(d)), sort: (d) => unpaidAmount(d) },
-  { key: "held_on", label: "実施予定", align: "center", render: (d) => mmdd(d.held_on), sort: (d) => d.held_on },
   { key: "payment_due", label: "入金予定", align: "center", render: (d) => mmdd(d.payment_due), sort: (d) => d.payment_due ?? "" },
   {
     key: "delay", label: "遅延日数", align: "num",

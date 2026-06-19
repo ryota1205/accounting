@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import MonthlySummary from "./pages/MonthlySummary";
 import Deals from "./pages/Deals";
@@ -11,24 +12,37 @@ import Analysis from "./pages/Analysis";
 import Payments from "./pages/Payments";
 import Masters from "./pages/Masters";
 import ImportExport from "./pages/ImportExport";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
+import { homeFor } from "./lib/access";
+
+// ルート "/" はロール別ホームへ
+function RootRedirect() {
+  const { user } = useAuth();
+  return <Navigate to={user ? homeFor(user.role) : "/login"} replace />;
+}
+
+// 認証＋権限ガードでページを包む
+const guard = (el: JSX.Element) => <ProtectedRoute>{el}</ProtectedRoute>;
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/monthly" element={<MonthlySummary />} />
-      <Route path="/deals" element={<Deals />} />
-      <Route path="/deals/new" element={<DealForm />} />
-      <Route path="/deals/:id/edit" element={<DealForm />} />
-      <Route path="/annual" element={<AnnualMatrix />} />
-      <Route path="/summary" element={<SummaryBy />} />
-      <Route path="/pl" element={<ProfitLoss />} />
-      <Route path="/sales" element={<SalesManagement />} />
-      <Route path="/analysis" element={<Analysis />} />
-      <Route path="/payments" element={<Payments />} />
-      <Route path="/masters" element={<Masters />} />
-      <Route path="/io" element={<ImportExport />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/" element={guard(<RootRedirect />)} />
+      <Route path="/dashboard" element={guard(<Dashboard />)} />
+      <Route path="/monthly" element={guard(<MonthlySummary />)} />
+      <Route path="/deals" element={guard(<Deals />)} />
+      <Route path="/deals/new" element={guard(<DealForm />)} />
+      <Route path="/deals/:id/edit" element={guard(<DealForm />)} />
+      <Route path="/annual" element={guard(<AnnualMatrix />)} />
+      <Route path="/summary" element={guard(<SummaryBy />)} />
+      <Route path="/pl" element={guard(<ProfitLoss />)} />
+      <Route path="/sales" element={guard(<SalesManagement />)} />
+      <Route path="/analysis" element={guard(<Analysis />)} />
+      <Route path="/payments" element={guard(<Payments />)} />
+      <Route path="/masters" element={guard(<Masters />)} />
+      <Route path="/io" element={guard(<ImportExport />)} />
     </Routes>
   );
 }

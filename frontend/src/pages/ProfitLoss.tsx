@@ -9,7 +9,7 @@ import { Loading, ErrorState } from "../components/States";
 import { useFiscalYear } from "../context/FiscalYearContext";
 import { api } from "../api/client";
 import { PLSummary, MonthlySummary, Deal } from "../api/types";
-import { yen, pct } from "../lib/format";
+import { yen, pct, man } from "../lib/format";
 
 // 前年同月比グラフでクリックした月の実施企業を表示するテーブル
 function MonthDealsTable({ title, deals }: { title: string; deals: Deal[] }) {
@@ -106,10 +106,12 @@ export default function ProfitLoss() {
 
   return (
     <Layout title="損益・損益分岐点">
-      <div className="panel" style={{ display: "flex", gap: 10, alignItems: "flex-end" }}>
+      <div className="panel" style={{ display: "flex", gap: 10, alignItems: "flex-end", marginBottom: 24 }}>
         <div className="field" style={{ marginBottom: 0 }}>
           <label>月額固定費（人件費・家賃など）</label>
-          <input type="number" value={fixed} onChange={(e) => setFixed(Number(e.target.value) || 0)} />
+          <input type="text" inputMode="numeric" style={{ fontSize: 13 }}
+            value={fixed ? fixed.toLocaleString("ja-JP") : ""}
+            onChange={(e) => setFixed(Number(e.target.value.replace(/[^\d]/g, "")) || 0)} />
           <span className="hint">年間固定費 = 月額 × 12</span>
         </div>
         <button className="btn" onClick={saveFixed}>固定費を保存</button>
@@ -123,8 +125,10 @@ export default function ProfitLoss() {
         <Card label="限界利益率" value={pct(pl.cm_ratio)} sub={`限界利益 ${yen(pl.contribution_margin)}`} />
         <Card label="営業利益" value={yen(pl.operating_profit)} />
         <Card label="損益分岐点売上高" value={yen(pl.bep)} />
-        <Card label="BEP達成率" value={pct(pl.bep_achievement)} />
-        <Card label="安全余裕率" value={pct(pl.safety_margin_ratio)} />
+        <Card label="BEP達成率" value={pct(pl.bep_achievement)}
+          sub={<span style={{ fontSize: 10 }}>100%超で黒字（売上÷損益分岐点）</span>} />
+        <Card label="安全余裕率" value={pct(pl.safety_margin_ratio)}
+          sub={<span style={{ fontSize: 10 }}>売上が落ちても赤字にならない余裕</span>} />
       </div>
 
       <div className="panel">
@@ -133,10 +137,10 @@ export default function ProfitLoss() {
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={bepData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="sales" tickFormatter={(v) => `${Math.round(v / 10000)}万`} />
-            <YAxis tickFormatter={(v) => `${Math.round(v / 10000)}万`} />
+            <XAxis dataKey="sales" tickFormatter={man} tick={{ fontSize: 11 }} padding={{ left: 12, right: 12 }} />
+            <YAxis tickFormatter={man} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => yen(v)} labelFormatter={(v) => `売上 ${yen(Number(v))}`} />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
             <Line dataKey="売上線" stroke="#2563eb" dot={false} />
             <Line dataKey="総費用線" stroke="#dc2626" dot={false} />
           </LineChart>
@@ -148,10 +152,10 @@ export default function ProfitLoss() {
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={cumData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis tickFormatter={(v) => `${Math.round(v / 10000)}万`} />
+            <XAxis dataKey="name" tick={{ fontSize: 11 }} padding={{ left: 12, right: 12 }} />
+            <YAxis tickFormatter={man} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => yen(v)} />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
             <Line dataKey="累計売上" stroke="#2563eb" />
             <Line dataKey="累計総費用" stroke="#dc2626" />
           </LineChart>
@@ -161,7 +165,7 @@ export default function ProfitLoss() {
       <div className="panel">
         <h3>前年同月比</h3>
         {!hasPrev && <div className="hint">※ 前年度（{fiscalYear - 1}年度）データがありません。</div>}
-        <div className="hint">グラフの月をクリックすると、その月の実施企業を下に表示します。</div>
+        <div className="hint" style={{ marginBottom: 16, fontSize: 11 }}>グラフの月をクリックすると、その月の実施企業を下に表示します。</div>
         <ResponsiveContainer width="100%" height={300}>
           <ComposedChart
             data={yoyData}
@@ -171,10 +175,10 @@ export default function ProfitLoss() {
             }}
           >
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis tickFormatter={(v) => `${Math.round(v / 10000)}万`} />
+            <XAxis dataKey="name" tick={{ fontSize: 11 }} padding={{ left: 12, right: 12 }} />
+            <YAxis tickFormatter={man} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => yen(v)} />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: 11 }} />
             <Bar dataKey="当年度" fill="#2563eb" style={{ cursor: "pointer" }} />
             <Line dataKey="前年度" stroke="#d97706" />
           </ComposedChart>
@@ -184,7 +188,7 @@ export default function ProfitLoss() {
       <div className="panel matrix">
         <h3>{selectedMonth === null ? "実施企業（月別明細）" : `${selectedMonth}月の実施企業`}</h3>
         {selectedMonth === null ? (
-          <div className="hint">前年同月比グラフの棒をクリックすると、その月の実施企業を表示します。</div>
+          <div className="hint" style={{ fontSize: 11 }}>前年同月比グラフの棒をクリックすると、その月の実施企業を表示します。</div>
         ) : monthErr ? (
           <ErrorState message={monthErr} />
         ) : monthDeals === null ? (
@@ -202,8 +206,8 @@ export default function ProfitLoss() {
         <ResponsiveContainer width="100%" height={260}>
           <LineChart data={gmData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis tickFormatter={(v) => `${v}%`} />
+            <XAxis dataKey="name" tick={{ fontSize: 11 }} padding={{ left: 12, right: 12 }} />
+            <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
             <Tooltip formatter={(v: number) => `${v}%`} />
             <Line dataKey="粗利率" stroke="#16a34a" />
           </LineChart>

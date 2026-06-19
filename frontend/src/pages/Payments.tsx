@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Layout } from "../components/Layout";
 import { Loading, Empty, ErrorState } from "../components/States";
 import { useFiscalYear } from "../context/FiscalYearContext";
+import { useAlerts } from "../context/AlertsContext";
 import { api } from "../api/client";
 import { Deal } from "../api/types";
 import { yen } from "../lib/format";
@@ -12,6 +13,7 @@ import {
 
 export default function Payments() {
   const { fiscalYear } = useFiscalYear();
+  const { refresh: refreshAlerts } = useAlerts();
   const [rows, setRows] = useState<Deal[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pStatus, setPStatus] = useState("");
@@ -29,6 +31,7 @@ export default function Payments() {
   async function pay(id: number) {
     await api.markPaid(id);
     load();
+    refreshAlerts();
   }
 
   let list = (rows ?? []).filter((d) => d.payment_status !== "paid");
@@ -78,9 +81,10 @@ export default function Payments() {
           <table>
             <thead>
               <tr>
-                <th>入金予定日</th><th>顧客名</th><th>研修</th>
+                <th style={{ textAlign: "center" }}>入金予定日</th>
+                <th style={{ maxWidth: 150 }}>顧客名</th><th>研修</th>
                 <th className="num">請求金額</th><th className="num">入金済</th><th className="num">未入金</th>
-                <th className="num">遅延日数</th><th style={{ textAlign: "center" }}>アラート</th><th></th>
+                <th style={{ textAlign: "center" }}>遅延日数</th><th style={{ textAlign: "center" }}>アラート</th><th></th>
               </tr>
             </thead>
             <tbody>
@@ -89,13 +93,13 @@ export default function Payments() {
                 const delay = paymentDelayDays(d, today);
                 return (
                   <tr key={d.id}>
-                    <td>{d.payment_due ?? "—"}</td>
-                    <td>{d.client}</td>
+                    <td style={{ textAlign: "center" }}>{d.payment_due ?? "—"}</td>
+                    <td style={{ maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis" }} title={d.client}>{d.client}</td>
                     <td>{d.training_theme ?? d.training_name ?? "—"}</td>
                     <td className="num">{yen(invoiceAmount(d))}</td>
                     <td className="num">{yen(d.paid_amount)}</td>
                     <td className="num">{yen(unpaidAmount(d))}</td>
-                    <td className="num">{delay > 0 ? `${delay}日` : "—"}</td>
+                    <td style={{ textAlign: "center" }}>{delay > 0 ? `${delay}日` : "—"}</td>
                     <td style={{ textAlign: "center" }}>
                       {a === "normal" ? "—" : <span className={`badge alert ${a}`}>{ALERT_LABELS[a]}</span>}
                     </td>

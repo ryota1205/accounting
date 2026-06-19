@@ -1,4 +1,6 @@
-export function Card({ label, value, sub }: { label: string; value: string; sub?: string }) {
+import { ReactNode } from "react";
+
+export function Card({ label, value, sub }: { label: string; value: string; sub?: ReactNode }) {
   return (
     <div className="card">
       <div className="label">{label}</div>
