@@ -23,11 +23,13 @@ async def import_excel(file: UploadFile = File(...), wipe: bool = False,
     content = await file.read()
     wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True)
     deals_in = parse_deals_sheet(wb)
+    built = [build_deal(d) for d in deals_in]
     if wipe:
-        session.exec(delete(Deal))
+        # 取り込むデータに含まれる年度のみ置き換える（他年度のデータは保持）
+        for fy in {d.fiscal_year for d in built}:
+            session.exec(delete(Deal).where(Deal.fiscal_year == fy))
     imported = 0
-    for data in deals_in:
-        deal = build_deal(data)
+    for data, deal in zip(deals_in, built):
         # 取り込み案件は実績（請求済）として扱う
         deal.payment_status = "invoiced"
         deal.project_status = "実施済"
