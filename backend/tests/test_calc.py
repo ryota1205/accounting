@@ -1,5 +1,5 @@
 from datetime import date
-from app.calc import calc_tax, calc_billing, fiscal_year_of, month_end, revenue_month_of
+from app.calc import calc_tax, calc_billing, fiscal_year_of, month_end, revenue_month_of, running_total
 
 
 def test_calc_tax_is_10_percent_of_fee():
@@ -24,3 +24,11 @@ def test_month_end_and_revenue_month():
     assert month_end(date(2026, 4, 8)) == date(2026, 4, 30)
     assert month_end(date(2027, 2, 5)) == date(2027, 2, 28)
     assert revenue_month_of(date(2026, 6, 19)) == date(2026, 6, 30)
+
+
+def test_running_total_accumulates_from_start():
+    assert running_total([100, -30, 50], start=1000) == [1100, 1070, 1120]
+
+
+def test_running_total_empty_returns_empty():
+    assert running_total([], start=500) == []
