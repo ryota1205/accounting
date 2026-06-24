@@ -115,6 +115,27 @@ export interface SalesFunnel {
 }
 export interface SalesActivity { month: string; inquiries: number; first_meetings: number; memo: string | null; }
 
+export type RecurringStatus =
+  | "current_month" | "current_fy" | "diff_theme" | "skipped" | "none";
+export interface RecurringRow {
+  year_label: string;   // 前年 / 前々年
+  ym: string;
+  held_on: string;
+  client: string;
+  training_name: string;
+  billing: number;
+  status: RecurringStatus;
+  skip_reason: string | null;
+  current_themes: string[];  // diff_theme のとき、今年その会社が実施した研修名
+}
+export interface RecurringSummary {
+  ym: string;
+  month: number;
+  history: RecurringRow[];
+  approach_count: number;
+  has_data: boolean;
+}
+
 export interface GroupRow { name: string; sales: number; gross: number; gross_rate: number; count: number; }
 export interface CustomerTypeRow { type: string; sales: number; share: number; }
 export interface Dependency { top1: number; top3: number; top5: number; total: number; }
@@ -152,6 +173,9 @@ export interface AnnualSummary {
   rows: AnnualRow[];
   month_totals: number[];
   grand_total: number;
+  prev_month_totals: number[];
+  prev_grand_total: number;
+  prev_has_data: boolean;
 }
 
 export interface ByRow { name: string; amount: number; instructor_fee: number; share: number; }

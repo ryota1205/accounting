@@ -98,6 +98,15 @@ class MonthlyFixedCost(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+class RecurringSkip(SQLModel, table=True):
+    """同月リピート候補で「今年は実施しない（見送り）」と決めた先。
+    キー＝(対象月 ym, 企業名)。アプローチ対象から除外する。"""
+    ym: str = Field(primary_key=True)        # 今年の対象月 "YYYY-MM"
+    client: str = Field(primary_key=True)    # 企業名
+    reason: Optional[str] = None             # 見送り理由（任意）
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 class SalesActivity(SQLModel, table=True):
     """営業活動の月次手入力（案件にならない問い合わせ・初回相談を補う）。"""
     month: str = Field(primary_key=True)   # "YYYY-MM"

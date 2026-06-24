@@ -57,6 +57,12 @@ class SalesActivityIn(SQLModel):
     memo: Optional[str] = None
 
 
+class RecurringSkipIn(SQLModel):
+    ym: str                       # 今年の対象月 "YYYY-MM"
+    client: str                   # 企業名
+    reason: Optional[str] = None  # 見送り理由（任意）
+
+
 class SettingIn(SQLModel):
     monthly_fixed_cost: int = 0
 

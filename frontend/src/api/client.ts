@@ -2,6 +2,7 @@ import {
   Deal, DealInput, Master, MasterKind,
   MonthlySummary, AnnualSummary, ByRow, PLSummary, Setting, ConfidenceRate,
   MonthSummary, MonthlyFixedCost, SalesFunnel, SalesActivity, Analysis, AuthUser,
+  RecurringSummary,
 } from "./types";
 
 // ===== API接続先 =====
@@ -124,6 +125,14 @@ export const api = {
 
   analysis: (fy: number) => req<Analysis>(`/api/summary/analysis${qs({ fiscal_year: fy })}`),
   salesFunnel: (ym: string) => req<SalesFunnel>(`/api/summary/sales${qs({ ym })}`),
+  recurring: (ym: string) => req<RecurringSummary>(`/api/summary/recurring${qs({ ym })}`),
+  skipRecurring: (ym: string, client: string, reason?: string | null) =>
+    req<{ ym: string; client: string; reason: string | null }>(
+      "/api/summary/recurring/skip",
+      { method: "PUT", body: JSON.stringify({ ym, client, reason: reason ?? null }) }),
+  unskipRecurring: (ym: string, client: string) =>
+    req<{ ym: string; client: string }>(
+      `/api/summary/recurring/skip${qs({ ym, client })}`, { method: "DELETE" }),
   getSalesActivity: (ym: string) => req<SalesActivity>(`/api/sales-activity/${ym}`),
   putSalesActivity: (ym: string, inquiries: number, first_meetings: number, memo?: string | null) =>
     req<SalesActivity>(`/api/sales-activity/${ym}`,

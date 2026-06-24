@@ -3,8 +3,28 @@ import { Layout } from "../components/Layout";
 import { Loading, Empty, ErrorState } from "../components/States";
 import { useFiscalYear } from "../context/FiscalYearContext";
 import { api } from "../api/client";
-import { SalesFunnel } from "../api/types";
-import { pct } from "../lib/format";
+import { SalesFunnel, RecurringSummary, RecurringStatus } from "../api/types";
+import { pct, yen } from "../lib/format";
+
+const STATUS_META: Record<RecurringStatus, { key: string; label: string }> = {
+  none: { key: "none", label: "未アプローチ" },
+  diff_theme: { key: "diff", label: "今年は別テーマ実施" },
+  current_fy: { key: "fy", label: "今年度・別月あり" },
+  current_month: { key: "month", label: "今年も実施/予定" },
+  skipped: { key: "skipped", label: "見送り" },
+};
+
+// アプローチ候補（未接触＋別テーマで未リピート）
+const APPROACH = new Set<RecurringStatus>(["none", "diff_theme"]);
+
+function StatusBadge({ status }: { status: RecurringStatus }) {
+  const m = STATUS_META[status];
+  return (
+    <span className={`badge recur ${m.key}`}>
+      <span className={`dot ${m.key}`} />{m.label}
+    </span>
+  );
+}
 
 function fiscalMonths(fy: number): string[] {
   const out: string[] = [];
@@ -28,6 +48,8 @@ export default function SalesManagement() {
   const months = fiscalMonths(fiscalYear);
   const [ym, setYm] = useState(months.includes("2026-06") ? "2026-06" : months[0]);
   const [data, setData] = useState<SalesFunnel | null>(null);
+  const [recur, setRecur] = useState<RecurringSummary | null>(null);
+  const [onlyApproach, setOnlyApproach] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inq, setInq] = useState(0);
   const [first, setFirst] = useState(0);
@@ -36,9 +58,11 @@ export default function SalesManagement() {
   useEffect(() => { if (!months.includes(ym)) setYm(months[0]); }, [fiscalYear]); // eslint-disable-line
 
   function load() {
-    setData(null); setError(null);
-    Promise.all([api.salesFunnel(ym), api.getSalesActivity(ym)])
-      .then(([f, a]) => { setData(f); setInq(a.inquiries); setFirst(a.first_meetings); })
+    setData(null); setRecur(null); setError(null);
+    Promise.all([api.salesFunnel(ym), api.getSalesActivity(ym), api.recurring(ym)])
+      .then(([f, a, r]) => {
+        setData(f); setInq(a.inquiries); setFirst(a.first_meetings); setRecur(r);
+      })
       .catch((e) => setError(e.message));
   }
   useEffect(load, [ym, fiscalYear]);
@@ -47,6 +71,19 @@ export default function SalesManagement() {
     setSavingMsg("保存中…");
     try { await api.putSalesActivity(ym, inq, first); setSavingMsg("保存しました"); load(); }
     catch (e) { setSavingMsg(""); setError((e as Error).message); }
+  }
+
+  const reloadRecur = () => api.recurring(ym).then(setRecur).catch((e) => setError(e.message));
+
+  async function skipClient(client: string) {
+    const reason = window.prompt(`「${client}」を今年は見送りにします。\n理由（任意・空欄でもOK）：`, "");
+    if (reason === null) return; // キャンセル
+    try { await api.skipRecurring(ym, client, reason.trim() || null); await reloadRecur(); }
+    catch (e) { setError((e as Error).message); }
+  }
+  async function unskipClient(client: string) {
+    try { await api.unskipRecurring(ym, client); await reloadRecur(); }
+    catch (e) { setError((e as Error).message); }
   }
 
   if (error) return <Layout title="営業管理"><ErrorState message={error} /></Layout>;
@@ -112,6 +149,76 @@ export default function SalesManagement() {
             </tbody>
           </table>
         )}
+      </div>
+
+      <div className="panel matrix">
+        <div className="recur-head">
+          <h3>同月リピート候補 — {recur ? `${recur.month}月` : ym}</h3>
+          {recur && (
+            <span className={`stat-chip${recur.approach_count === 0 ? " zero" : ""}`}>
+              アプローチ対象 <b>{recur.approach_count}</b> 社
+            </span>
+          )}
+          <label className="switch">
+            <input type="checkbox" checked={onlyApproach} onChange={(e) => setOnlyApproach(e.target.checked)} />
+            アプローチ候補のみ
+          </label>
+        </div>
+        <div className="legend">
+          <span><span className="dot none" />未アプローチ（今年度まだ案件なし）</span>
+          <span><span className="dot diff" />今年は別テーマ実施（この研修は未リピート）</span>
+          <span><span className="dot fy" />今年度・別月あり（同じ研修）</span>
+          <span><span className="dot month" />今年も実施/予定（同じ研修）</span>
+          <span><span className="dot skipped" />見送り（今年は実施しない）</span>
+        </div>
+        {!recur ? <Loading /> : !recur.has_data ? (
+          <Empty label="前年・前々年の同月に実績はありません" />
+        ) : (() => {
+          const rows = onlyApproach
+            ? recur.history.filter((h) => APPROACH.has(h.status))
+            : recur.history;
+          if (rows.length === 0) return <Empty label="未アプローチの先はありません（すべて接点済み）" />;
+          return (
+            <table className="recur-table">
+              <thead>
+                <tr>
+                  <th>時期</th><th>企業名</th><th>研修名</th>
+                  <th>実施日</th><th className="num">金額</th><th>今年の状況</th><th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((h, i) => (
+                  <tr key={i} className={`is-${STATUS_META[h.status].key}`}>
+                    <td><span className="term-pill">{h.year_label}</span></td>
+                    <td className="client">{h.client}</td>
+                    <td className="cell-wrap">{h.training_name}</td>
+                    <td>{h.held_on}</td>
+                    <td className="num">{yen(h.billing)}</td>
+                    <td>
+                      <StatusBadge status={h.status} />
+                      {h.status === "diff_theme" && h.current_themes.length > 0 &&
+                        <span className="skip-reason">今年: {h.current_themes.join(" / ")}</span>}
+                      {h.status === "skipped" && h.skip_reason &&
+                        <span className="skip-reason">理由: {h.skip_reason}</span>}
+                    </td>
+                    <td>
+                      {APPROACH.has(h.status) && (
+                        <button className="link-btn muted" onClick={() => skipClient(h.client)}>
+                          今年は見送り
+                        </button>
+                      )}
+                      {h.status === "skipped" && (
+                        <button className="link-btn" onClick={() => unskipClient(h.client)}>
+                          戻す
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          );
+        })()}
       </div>
     </Layout>
   );
