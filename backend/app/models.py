@@ -80,6 +80,7 @@ class Agency(SQLModel, table=True):
 class Setting(SQLModel, table=True):
     fiscal_year: int = Field(primary_key=True)
     monthly_fixed_cost: int = 0
+    opening_balance: int = 0          # 年度開始時点の手元資金（資金繰り画面の起点）
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 

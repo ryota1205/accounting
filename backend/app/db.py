@@ -71,6 +71,9 @@ def _run_migrations() -> None:
                 "UPDATE deal SET paid_amount=COALESCE(invoice_amount, billing) "
                 "WHERE payment_status='paid' AND (paid_amount IS NULL OR paid_amount=0)"
             ))
+        setting_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(setting)"))]
+        if setting_cols and "opening_balance" not in setting_cols:
+            conn.execute(text("ALTER TABLE setting ADD COLUMN opening_balance INTEGER DEFAULT 0"))
         conn.commit()
 
     # 受注確度の初期掛け率を投入（無ければ）

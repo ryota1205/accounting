@@ -64,7 +64,8 @@ class RecurringSkipIn(SQLModel):
 
 
 class SettingIn(SQLModel):
-    monthly_fixed_cost: int = 0
+    monthly_fixed_cost: Optional[int] = None
+    opening_balance: Optional[int] = None
 
 
 class MasterIn(SQLModel):
