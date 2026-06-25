@@ -115,3 +115,20 @@ class SalesActivity(SQLModel, table=True):
     first_meetings: int = 0     # 初回相談数（手入力）
     memo: Optional[str] = None
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class PaymentItem(SQLModel, table=True):
+    """年間の大型支払いの項目マスタ（消費税・社会保険料など）。年度をまたいで共有する。"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    sort_order: int = 0
+    active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class PaymentSchedule(SQLModel, table=True):
+    """大型支払いの月別金額。キー＝(項目ID, 対象月 ym)。"""
+    item_id: int = Field(primary_key=True)
+    ym: str = Field(primary_key=True)        # "YYYY-MM"
+    amount: int = 0
+    updated_at: datetime = Field(default_factory=datetime.utcnow)

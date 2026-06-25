@@ -72,3 +72,22 @@ class MasterIn(SQLModel):
     name: str
     active: bool = True
     agency: Optional[str] = None  # 企業マスタのみ使用（既定代理店）
+
+
+class PaymentItemIn(SQLModel):
+    name: str
+
+
+class PaymentItemUpdate(SQLModel):
+    name: Optional[str] = None
+    sort_order: Optional[int] = None
+
+
+class ScheduleCellIn(SQLModel):
+    item_id: int
+    ym: str
+    amount: int = 0
+
+
+class SchedulePutIn(SQLModel):
+    cells: list[ScheduleCellIn] = []

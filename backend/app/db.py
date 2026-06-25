@@ -85,6 +85,15 @@ def _run_migrations() -> None:
                 session.add(ConfidenceRate(rank=rank, rate=rate))
         session.commit()
 
+    # 大型支払いの定番項目を初期投入（1件も無ければ）
+    from app.models import PaymentItem
+    default_items = ["消費税", "社会保険料", "労働保険料", "法人税等", "住民税・事業税", "源泉所得税"]
+    with Session(engine) as session:
+        if not session.exec(select(PaymentItem)).first():
+            for i, name in enumerate(default_items):
+                session.add(PaymentItem(name=name, sort_order=i))
+            session.commit()
+
 
 def get_session():
     with Session(engine) as session:

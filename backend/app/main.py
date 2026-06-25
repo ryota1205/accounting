@@ -30,6 +30,7 @@ def health():
 
 from app.routers import (
     deals, masters, settings, summary, payments, io_excel, confidence, activity, auth,
+    cashflow,
 )
 
 app.include_router(auth.router)
@@ -41,6 +42,7 @@ app.include_router(payments.router)
 app.include_router(io_excel.router)
 app.include_router(confidence.router)
 app.include_router(activity.router)
+app.include_router(cashflow.router)
 
 
 # --- ビルド済みフロントの同梱配信（後で外部CDN/別配信に差し替えやすいよう分離） ---
