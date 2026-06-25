@@ -57,11 +57,37 @@ class SalesActivityIn(SQLModel):
     memo: Optional[str] = None
 
 
+class RecurringSkipIn(SQLModel):
+    ym: str                       # 今年の対象月 "YYYY-MM"
+    client: str                   # 企業名
+    reason: Optional[str] = None  # 見送り理由（任意）
+
+
 class SettingIn(SQLModel):
-    monthly_fixed_cost: int = 0
+    monthly_fixed_cost: Optional[int] = None
+    opening_balance: Optional[int] = None
 
 
 class MasterIn(SQLModel):
     name: str
     active: bool = True
     agency: Optional[str] = None  # 企業マスタのみ使用（既定代理店）
+
+
+class PaymentItemIn(SQLModel):
+    name: str
+
+
+class PaymentItemUpdate(SQLModel):
+    name: Optional[str] = None
+    sort_order: Optional[int] = None
+
+
+class ScheduleCellIn(SQLModel):
+    item_id: int
+    ym: str
+    amount: int = 0
+
+
+class SchedulePutIn(SQLModel):
+    cells: list[ScheduleCellIn] = []

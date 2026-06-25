@@ -10,6 +10,7 @@ import ProfitLoss from "./pages/ProfitLoss";
 import SalesManagement from "./pages/SalesManagement";
 import Analysis from "./pages/Analysis";
 import Payments from "./pages/Payments";
+import CashFlow from "./pages/CashFlow";
 import Masters from "./pages/Masters";
 import ImportExport from "./pages/ImportExport";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -41,6 +42,7 @@ export default function App() {
       <Route path="/sales" element={guard(<SalesManagement />)} />
       <Route path="/analysis" element={guard(<Analysis />)} />
       <Route path="/payments" element={guard(<Payments />)} />
+      <Route path="/cashflow" element={guard(<CashFlow />)} />
       <Route path="/masters" element={guard(<Masters />)} />
       <Route path="/io" element={guard(<ImportExport />)} />
     </Routes>

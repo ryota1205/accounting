@@ -70,3 +70,13 @@ def pl_metrics(net_sales: int, variable: int, annual_fixed: int) -> dict:
         "safety_margin_ratio": safety_margin_ratio,
         "bep_achievement": bep_achievement,
     }
+
+
+def running_total(values: Iterable[int], start: int = 0) -> list[int]:
+    """各時点までの累計を、start を起点に返す。資金残高の推移に使う。"""
+    result = []
+    acc = start
+    for v in values:
+        acc += v
+        result.append(acc)
+    return result

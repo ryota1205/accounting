@@ -25,6 +25,18 @@ export default function AnnualMatrix() {
     ? [...data.rows].sort((a, b) => a.client.localeCompare(b.client, "ja") * (sortDir === "asc" ? 1 : -1))
     : data.rows;
 
+  // 前年対比：今年度の月計 − 前年度の月計。＋は緑・−は赤で表示。
+  const diff = (cur: number, prev: number) => {
+    const d = cur - (prev ?? 0);
+    const color = d > 0 ? "var(--ok)" : d < 0 ? "var(--danger)" : "var(--muted)";
+    const sign = d > 0 ? "+" : d < 0 ? "−" : "±";
+    return (
+      <span style={{ color, fontWeight: 600 }}>
+        {sign}¥{Math.abs(d).toLocaleString("ja-JP")}
+      </span>
+    );
+  };
+
   return (
     <Layout title="年間売上管理表">
       <div className="panel matrix flush">
@@ -48,6 +60,15 @@ export default function AnnualMatrix() {
               {data.month_totals.map((m, i) => <th key={i} className="num">{yen(m)}</th>)}
               <th className="num">{yen(data.grand_total)}</th>
             </tr>
+            {data.prev_has_data && (
+              <tr>
+                <th>前年対比</th>
+                {data.month_totals.map((m, i) => (
+                  <th key={i} className="num">{diff(m, data.prev_month_totals[i])}</th>
+                ))}
+                <th className="num">{diff(data.grand_total, data.prev_grand_total)}</th>
+              </tr>
+            )}
           </thead>
           <tbody>
             {sortedRows.map((r) => (

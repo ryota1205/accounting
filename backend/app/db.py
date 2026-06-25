@@ -71,6 +71,9 @@ def _run_migrations() -> None:
                 "UPDATE deal SET paid_amount=COALESCE(invoice_amount, billing) "
                 "WHERE payment_status='paid' AND (paid_amount IS NULL OR paid_amount=0)"
             ))
+        setting_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(setting)"))]
+        if setting_cols and "opening_balance" not in setting_cols:
+            conn.execute(text("ALTER TABLE setting ADD COLUMN opening_balance INTEGER DEFAULT 0"))
         conn.commit()
 
     # 受注確度の初期掛け率を投入（無ければ）
@@ -81,6 +84,15 @@ def _run_migrations() -> None:
             if session.get(ConfidenceRate, rank) is None:
                 session.add(ConfidenceRate(rank=rank, rate=rate))
         session.commit()
+
+    # 大型支払いの定番項目を初期投入（1件も無ければ）
+    from app.models import PaymentItem
+    default_items = ["消費税", "社会保険料", "労働保険料", "法人税等", "住民税・事業税", "源泉所得税"]
+    with Session(engine) as session:
+        if not session.exec(select(PaymentItem)).first():
+            for i, name in enumerate(default_items):
+                session.add(PaymentItem(name=name, sort_order=i))
+            session.commit()
 
 
 def get_session():

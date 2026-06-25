@@ -87,6 +87,49 @@ td.num, th.num { text-align: right; }
 .badge.alert.partial_remain { background: #fef3c7; color: var(--warn); }
 .badge.alert.overdue { background: #fee2e2; color: var(--danger); font-weight: 700; }
 .badge.alert.long_overdue { background: var(--danger); color: #fff; font-weight: 700; }
+/* === 同月リピート候補（営業管理） === */
+.recur-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.recur-head h3 { margin: 0; font-size: 15px; }
+.stat-chip { display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 13px;
+  border-radius: 999px; font-size: 13px; font-weight: 700; background: #fee2e2; color: var(--danger); }
+.stat-chip.zero { background: #dcfce7; color: var(--ok); }
+.stat-chip b { font-size: 17px; line-height: 1; }
+.switch { margin-left: auto; display: inline-flex; align-items: center; gap: 7px;
+  font-size: 13px; color: var(--text); cursor: pointer; user-select: none; }
+.switch input { width: 15px; height: 15px; accent-color: var(--danger); cursor: pointer; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 2px 0 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: 0 0 auto; }
+.dot.none { background: var(--danger); } .dot.fy { background: var(--warn); }
+.dot.month { background: var(--ok); } .dot.skipped { background: #94a3b8; }
+.dot.diff { background: #2563eb; }
+.recur-table tbody tr { transition: background .12s ease; }
+.recur-table tbody tr:hover { background: #f8fafc; }
+.recur-table tbody td:first-child { border-left: 3px solid transparent; }
+.recur-table tr.is-none { background: #fff7f7; }
+.recur-table tr.is-none td:first-child { border-left-color: var(--danger); }
+.recur-table tr.is-fy td:first-child { border-left-color: var(--warn); }
+.recur-table tr.is-month td:first-child { border-left-color: var(--ok); }
+.recur-table tr.is-diff { background: #f5f8ff; }
+.recur-table tr.is-diff td:first-child { border-left-color: #2563eb; }
+.recur-table tr.is-skipped { color: var(--muted); background: #fafafa; }
+.recur-table tr.is-skipped td:first-child { border-left-color: #cbd5e1; }
+.recur-table tr.is-skipped .client { font-weight: 600; color: var(--muted); }
+.recur-table .client { font-weight: 600; }
+.recur-table .skip-reason { font-size: 11px; color: var(--muted); margin-left: 6px; }
+.term-pill { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999px;
+  background: #f1f5f9; color: #475569; white-space: nowrap; }
+.badge.recur { display: inline-flex; align-items: center; gap: 5px; }
+.badge.recur.none { background: #fee2e2; color: var(--danger); font-weight: 700; }
+.badge.recur.fy { background: #fef3c7; color: var(--warn); }
+.badge.recur.month { background: #dcfce7; color: var(--ok); }
+.badge.recur.skipped { background: #f1f5f9; color: #64748b; }
+.badge.recur.diff { background: #dbeafe; color: #1d4ed8; }
+/* 行内アクション（見送り/戻す） */
+.link-btn { background: none; border: none; padding: 0; font-size: 12px; cursor: pointer;
+  color: var(--primary); white-space: nowrap; }
+.link-btn:hover { text-decoration: underline; }
+.link-btn.muted { color: var(--muted); }
 .state { padding: 40px; text-align: center; color: var(--muted); }
 .err { color: var(--danger); }
 .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
@@ -106,9 +149,12 @@ td.num, th.num { text-align: right; }
 .flush { overflow: auto; max-height: calc(100vh - 150px); padding: 0; }
 .flush table { border-collapse: separate; border-spacing: 0; }
 .flush th, .flush td { border-bottom: 1px solid var(--border); }
-/* 見出し2行を上部に固定 */
+/* 見出し行（企業名/月計/前年対比）を上部に固定 */
 .flush thead th { position: sticky; top: 0; z-index: 2; background: var(--panel); }
-.flush thead tr:nth-child(2) th { top: 37px; z-index: 2; }
+/* 2行目以降は z-index を指定しない（左端セルの z-index:3 を上書きしないため）。
+   指定すると右スクロール時に数値セルが固定列の上に重なって「はみ出す」 */
+.flush thead tr:nth-child(2) th { top: 37px; }
+.flush thead tr:nth-child(3) th { top: 74px; }
 /* 企業名列（左端）を固定 */
 .flush th:first-child, .flush td:first-child {
   position: sticky; left: 0; z-index: 1; background: var(--panel);
@@ -181,3 +227,21 @@ td.num, th.num { text-align: right; }
 .deals-grid thead .stickL { z-index: 3; }          /* 見出しの固定列は最前面 */
 .deals-grid .stickL0 { left: 0; width: 76px; min-width: 76px; }
 .deals-grid .stickL1 { left: 76px; box-shadow: 1px 0 0 var(--border); } /* 顧客名の右端に区切り線 */
+
+/* ===== 資金繰り（cashflow） ===== */
+.cashflow-table .cell-input {
+  width: 100%; min-width: 70px; text-align: right; border: 1px solid transparent;
+  background: transparent; padding: 4px 6px; font-size: 13px; border-radius: 4px;
+}
+.cashflow-table .cell-input:hover { border-color: var(--border, #e2e8f0); }
+.cashflow-table .cell-input:focus { border-color: #2563eb; background: #fff; outline: none; }
+.cashflow-table .row-actions { margin-left: 8px; white-space: nowrap; }
+.link-btn {
+  border: none; background: none; cursor: pointer; font-size: 12px; padding: 2px 4px;
+  opacity: 0.55;
+}
+.link-btn:hover { opacity: 1; }
+.link-btn.danger:hover { color: var(--danger, #dc2626); }
+.seg { display: inline-flex; border: 1px solid var(--border, #e2e8f0); border-radius: 6px; overflow: hidden; }
+.seg button { border: none; background: #fff; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+.seg button.active { background: #2563eb; color: #fff; }

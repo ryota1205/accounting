@@ -1,9 +1,14 @@
+import re
+from collections import defaultdict
 from datetime import date
 from fastapi import APIRouter, Depends, Query
 from sqlmodel import Session, select
 
 from app.db import get_session
-from app.models import Deal, Setting, MonthlyFixedCost, ConfidenceRate, SalesActivity
+from app.models import (
+    Deal, Setting, MonthlyFixedCost, ConfidenceRate, SalesActivity, RecurringSkip,
+)
+from app.schemas import RecurringSkipIn
 from app import calc
 from app.auth import require_admin
 
@@ -54,11 +59,22 @@ def annual(fiscal_year: int, session: Session = Depends(get_session)):
         for i in range(12):
             month_totals[i] += buckets[i]
         rows.append({"client": c, "months": buckets, "total": sum(buckets)})
+
+    # 前年同年度の月計（前年対比の差額表示用）
+    prev = _deals_in_fy(session, fiscal_year - 1)
+    prev_has_data = len(prev) > 0
+    prev_month_totals = calc.monthly_buckets(
+        fiscal_year - 1,
+        [(d.revenue_month.year, d.revenue_month.month, d.billing) for d in prev],
+    )
     return {
         "labels": MONTH_LABELS,
         "rows": rows,
         "month_totals": month_totals,
         "grand_total": sum(month_totals),
+        "prev_month_totals": prev_month_totals,
+        "prev_grand_total": sum(prev_month_totals),
+        "prev_has_data": prev_has_data,
     }
 
 
@@ -330,6 +346,144 @@ def sales_funnel(ym: str, session: Session = Depends(get_session)):
         "prev_year": prev,
         "prev_year_has_data": prev["total_deals"] > 0,
     }
+
+
+def _parse_ym(ym: str) -> tuple[int, int]:
+    try:
+        return int(ym[:4]), int(ym[5:7])
+    except (ValueError, IndexError):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=422, detail="ym は YYYY-MM 形式で指定してください")
+
+
+# 並び順：未アプローチ → 別テーマ実施 → 今年同テーマ実施/予定 → 見送り の順で表示
+_STATUS_RANK = {"none": 0, "diff_theme": 1, "current_month": 2, "current_fy": 3, "skipped": 4}
+# アプローチ候補とみなすステータス（未接触＋別テーマで未リピート）
+_APPROACH_STATUSES = {"none", "diff_theme"}
+
+
+def _deal_theme(d: Deal) -> str:
+    """研修の識別名（表示・照合の元）。training_name 優先。"""
+    return (d.training_name or d.training_theme or d.project_name or "").strip()
+
+
+def _norm_theme(name: str) -> str:
+    """研修名の表記ゆれを吸収する正規化（空白・記号を除去して小文字化）。"""
+    return re.sub(r"[\s・,，、。!！?？/／\-—_（）()]+", "", (name or "").strip().lower())
+
+
+def _theme_match(a: str, b: str) -> bool:
+    """正規化後に同一、または一方が他方を含めば同じ研修とみなす（部分一致で表記ゆれ対応）。"""
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    return len(a) >= 2 and len(b) >= 2 and (a in b or b in a)
+
+
+@router.get("/recurring")
+def recurring(ym: str, session: Session = Depends(get_session)):
+    """選択月の「同月」（前年・前々年）に実施した研修一覧を返す。
+    各行に今年の状況フラグを付け、リピート営業のアプローチ先を見極める材料にする。
+      - current_month: 今年の同月に「同じ研修」を実施/予定
+      - current_fy   : 今年度内の別月に「同じ研修」を実施/予定
+      - diff_theme   : 会社は今年動いているが「別テーマ」のみ（この研修は未リピート＝アプローチ候補）
+      - skipped      : 今年は実施しない（見送り）と決めた先
+      - none         : 今年度に案件なし（＝未アプローチ・アプローチ候補）
+    """
+    year, month = _parse_ym(ym)
+    norm_ym = f"{year:04d}-{month:02d}"
+
+    all_deals = session.exec(select(Deal)).all()
+    cur_fy = calc.fiscal_year_of(date(year, month, 1))
+    # 今年度（cur_fy）の案件を企業ごとに集約
+    cur_by_client: dict[str, list[Deal]] = defaultdict(list)
+    for d in all_deals:
+        if calc.fiscal_year_of(d.held_on) == cur_fy:
+            cur_by_client[d.client].append(d)
+    skips = {
+        s.client: s.reason
+        for s in session.exec(select(RecurringSkip).where(RecurringSkip.ym == norm_ym)).all()
+    }
+
+    def evaluate(d: Deal) -> tuple[str, list[str]]:
+        """過去の研修 d について、今年の状況フラグと（別テーマ時の）今年の研修名を返す。"""
+        client = d.client
+        cur = cur_by_client.get(client, [])
+        key = _norm_theme(_deal_theme(d))
+        same = [x for x in cur if _theme_match(key, _norm_theme(_deal_theme(x)))]
+        if same:
+            if any(x.held_on.year == year and x.held_on.month == month for x in same):
+                return "current_month", []
+            return "current_fy", []
+        if client in skips:
+            return "skipped", []
+        if cur:
+            # 会社は今年動いているが、この研修テーマは未リピート
+            themes, seen = [], set()
+            for x in cur:
+                t = _deal_theme(x) or "（研修名未設定）"
+                if t not in seen:
+                    seen.add(t)
+                    themes.append(t)
+            return "diff_theme", themes[:3]
+        return "none", []
+
+    history = []
+    for back, label in ((1, "前年"), (2, "前々年")):
+        ty = year - back
+        rows = [d for d in all_deals
+                if d.held_on.year == ty and d.held_on.month == month]
+        rows.sort(key=lambda d: (_STATUS_RANK[evaluate(d)[0]], d.client))
+        for d in rows:
+            st, cur_themes = evaluate(d)
+            history.append({
+                "year_label": label,
+                "ym": f"{ty:04d}-{month:02d}",
+                "held_on": d.held_on.isoformat(),
+                "client": d.client,
+                "training_name": _deal_theme(d) or "（研修名未設定）",
+                "billing": d.billing,
+                "status": st,
+                "skip_reason": skips.get(d.client) if st == "skipped" else None,
+                "current_themes": cur_themes if st == "diff_theme" else [],
+            })
+
+    approach_clients = {h["client"] for h in history if h["status"] in _APPROACH_STATUSES}
+    return {
+        "ym": norm_ym,
+        "month": month,
+        "history": history,
+        "approach_count": len(approach_clients),
+        "has_data": len(history) > 0,
+    }
+
+
+@router.put("/recurring/skip")
+def set_recurring_skip(data: RecurringSkipIn, session: Session = Depends(get_session)):
+    """同月リピート候補の企業を「今年は見送り」に設定（理由は任意）。"""
+    year, month = _parse_ym(data.ym)
+    norm_ym = f"{year:04d}-{month:02d}"
+    row = session.get(RecurringSkip, (norm_ym, data.client))
+    if row is None:
+        row = RecurringSkip(ym=norm_ym, client=data.client, reason=data.reason)
+    else:
+        row.reason = data.reason
+    session.add(row)
+    session.commit()
+    return {"ym": norm_ym, "client": data.client, "reason": row.reason}
+
+
+@router.delete("/recurring/skip")
+def clear_recurring_skip(ym: str, client: str, session: Session = Depends(get_session)):
+    """見送りを解除（アプローチ対象に戻す）。"""
+    year, month = _parse_ym(ym)
+    norm_ym = f"{year:04d}-{month:02d}"
+    row = session.get(RecurringSkip, (norm_ym, client))
+    if row is not None:
+        session.delete(row)
+        session.commit()
+    return {"ym": norm_ym, "client": client}
 
 
 @router.get("/month")

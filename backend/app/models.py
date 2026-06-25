@@ -80,6 +80,7 @@ class Agency(SQLModel, table=True):
 class Setting(SQLModel, table=True):
     fiscal_year: int = Field(primary_key=True)
     monthly_fixed_cost: int = 0
+    opening_balance: int = 0          # 年度開始時点の手元資金（資金繰り画面の起点）
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -98,10 +99,36 @@ class MonthlyFixedCost(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+class RecurringSkip(SQLModel, table=True):
+    """同月リピート候補で「今年は実施しない（見送り）」と決めた先。
+    キー＝(対象月 ym, 企業名)。アプローチ対象から除外する。"""
+    ym: str = Field(primary_key=True)        # 今年の対象月 "YYYY-MM"
+    client: str = Field(primary_key=True)    # 企業名
+    reason: Optional[str] = None             # 見送り理由（任意）
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 class SalesActivity(SQLModel, table=True):
     """営業活動の月次手入力（案件にならない問い合わせ・初回相談を補う）。"""
     month: str = Field(primary_key=True)   # "YYYY-MM"
     inquiries: int = 0          # 問い合わせ数（手入力）
     first_meetings: int = 0     # 初回相談数（手入力）
     memo: Optional[str] = None
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class PaymentItem(SQLModel, table=True):
+    """年間の大型支払いの項目マスタ（消費税・社会保険料など）。年度をまたいで共有する。"""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    sort_order: int = 0
+    active: bool = True
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class PaymentSchedule(SQLModel, table=True):
+    """大型支払いの月別金額。キー＝(項目ID, 対象月 ym)。"""
+    item_id: int = Field(primary_key=True)
+    ym: str = Field(primary_key=True)        # "YYYY-MM"
+    amount: int = 0
     updated_at: datetime = Field(default_factory=datetime.utcnow)

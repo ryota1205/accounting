@@ -46,10 +46,12 @@ def get_settings(fiscal_year: int, session: Session = Depends(get_session)):
 def put_settings(fiscal_year: int, data: SettingIn, session: Session = Depends(get_session)):
     row = session.get(Setting, fiscal_year)
     if row is None:
-        row = Setting(fiscal_year=fiscal_year, monthly_fixed_cost=data.monthly_fixed_cost)
-    else:
+        row = Setting(fiscal_year=fiscal_year)
+    if data.monthly_fixed_cost is not None:
         row.monthly_fixed_cost = data.monthly_fixed_cost
-        row.updated_at = datetime.utcnow()
+    if data.opening_balance is not None:
+        row.opening_balance = data.opening_balance
+    row.updated_at = datetime.utcnow()
     session.add(row)
     session.commit()
     session.refresh(row)
