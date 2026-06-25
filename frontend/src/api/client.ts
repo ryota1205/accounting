@@ -2,7 +2,7 @@ import {
   Deal, DealInput, Master, MasterKind,
   MonthlySummary, AnnualSummary, ByRow, PLSummary, Setting, ConfidenceRate,
   MonthSummary, MonthlyFixedCost, SalesFunnel, SalesActivity, Analysis, AuthUser,
-  RecurringSummary,
+  RecurringSummary, PaymentItem, ScheduleMatrix, CashFlowSummary,
 } from "./types";
 
 // ===== API接続先 =====
@@ -112,6 +112,23 @@ export const api = {
 
   listPayments: (status: string, fy: number) =>
     req<Deal[]>(`/api/payments${qs({ status, fiscal_year: fy })}`),
+
+  // ===== 資金繰り（cashflow） =====
+  putOpeningBalance: (fy: number, opening_balance: number) =>
+    req<Setting>(`/api/settings/${fy}`, { method: "PUT", body: JSON.stringify({ opening_balance }) }),
+  listPaymentItems: () => req<PaymentItem[]>(`/api/cashflow/items`),
+  createPaymentItem: (name: string) =>
+    req<PaymentItem>(`/api/cashflow/items`, { method: "POST", body: JSON.stringify({ name }) }),
+  updatePaymentItem: (id: number, name: string) =>
+    req<PaymentItem>(`/api/cashflow/items/${id}`, { method: "PATCH", body: JSON.stringify({ name }) }),
+  deletePaymentItem: (id: number) =>
+    req<{ id: number }>(`/api/cashflow/items/${id}`, { method: "DELETE" }),
+  getSchedule: (fy: number) => req<ScheduleMatrix>(`/api/cashflow/schedule${qs({ fiscal_year: fy })}`),
+  putSchedule: (fy: number, cells: { item_id: number; ym: string; amount: number }[]) =>
+    req<{ saved: number }>(`/api/cashflow/schedule${qs({ fiscal_year: fy })}`,
+      { method: "PUT", body: JSON.stringify({ cells }) }),
+  cashflow: (fy: number, basis: "billing" | "paid") =>
+    req<CashFlowSummary>(`/api/cashflow${qs({ fiscal_year: fy, basis })}`),
 
   listConfidenceRates: () => req<ConfidenceRate[]>(`/api/confidence-rates`),
   updateConfidenceRate: (rank: string, rate: number) =>

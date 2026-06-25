@@ -18,6 +18,7 @@ function Icon({ name }: { name: string }) {
     sales: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="4" /><circle cx="12" cy="12" r="0.5" /></>,
     analysis: <><path d="M12 3v9l7 4" /><path d="M21 12a9 9 0 1 1-9-9" /></>,
     payments: <><rect x="2" y="6" width="20" height="13" rx="2" /><path d="M2 10h20M7 15h4" /></>,
+    cash: <><path d="M3 6h18v12H3z" /><circle cx="12" cy="12" r="2.5" /><path d="M7 9v6M17 9v6" /></>,
     masters: <><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" /></>,
     io: <><path d="M14 2v6h6" /><path d="M6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" /><path d="M9 14l3 3 3-3M12 11v6" /></>,
   };
@@ -46,6 +47,7 @@ const MENU_GROUPS: { title?: string; items: { to: string; label: string; icon: s
   ] },
   { title: "入金", items: [
     { to: "/payments", label: "入金管理", icon: "payments" },
+    { to: "/cashflow", label: "資金繰り", icon: "cash" },
   ] },
   { title: "設定・連携", items: [
     { to: "/masters", label: "マスタ管理", icon: "masters" },

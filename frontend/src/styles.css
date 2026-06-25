@@ -227,3 +227,21 @@ td.num, th.num { text-align: right; }
 .deals-grid thead .stickL { z-index: 3; }          /* 見出しの固定列は最前面 */
 .deals-grid .stickL0 { left: 0; width: 76px; min-width: 76px; }
 .deals-grid .stickL1 { left: 76px; box-shadow: 1px 0 0 var(--border); } /* 顧客名の右端に区切り線 */
+
+/* ===== 資金繰り（cashflow） ===== */
+.cashflow-table .cell-input {
+  width: 100%; min-width: 70px; text-align: right; border: 1px solid transparent;
+  background: transparent; padding: 4px 6px; font-size: 13px; border-radius: 4px;
+}
+.cashflow-table .cell-input:hover { border-color: var(--border, #e2e8f0); }
+.cashflow-table .cell-input:focus { border-color: #2563eb; background: #fff; outline: none; }
+.cashflow-table .row-actions { margin-left: 8px; white-space: nowrap; }
+.link-btn {
+  border: none; background: none; cursor: pointer; font-size: 12px; padding: 2px 4px;
+  opacity: 0.55;
+}
+.link-btn:hover { opacity: 1; }
+.link-btn.danger:hover { color: var(--danger, #dc2626); }
+.seg { display: inline-flex; border: 1px solid var(--border, #e2e8f0); border-radius: 6px; overflow: hidden; }
+.seg button { border: none; background: #fff; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+.seg button.active { background: #2563eb; color: #fff; }

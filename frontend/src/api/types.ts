@@ -203,4 +203,28 @@ export interface PLSummary {
   top_clients: TopClient[];
 }
 
-export interface Setting { fiscal_year: number; monthly_fixed_cost: number; }
+export interface Setting { fiscal_year: number; monthly_fixed_cost: number; opening_balance: number; }
+
+export interface PaymentItem { id: number; name: string; sort_order: number; active: boolean; }
+
+// item_id(文字列) -> { ym: amount }
+export interface ScheduleMatrix {
+  fiscal_year: number;
+  amounts: Record<string, Record<string, number>>;
+}
+
+export interface CashFlowSummary {
+  labels: string[];
+  basis: "billing" | "paid";
+  opening_balance: number;
+  inflow: number[];
+  cost: number[];
+  fixed_cost: number[];
+  big_payment: number[];
+  net: number[];
+  balance: number[];
+  undated_inflow: number;
+  grand_inflow: number;
+  grand_outflow: number;
+  ending_balance: number;
+}
