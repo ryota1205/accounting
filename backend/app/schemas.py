@@ -71,7 +71,9 @@ class SettingIn(SQLModel):
 class MasterIn(SQLModel):
     name: str
     active: bool = True
-    agency: Optional[str] = None  # 企業マスタのみ使用（既定代理店）
+    agency: Optional[str] = None   # 企業マスタのみ使用（既定代理店）
+    address: Optional[str] = None  # 企業マスタのみ使用（本社所在地）
+    url: Optional[str] = None      # 企業マスタのみ使用（公式サイトURL）
 
 
 class PaymentItemIn(SQLModel):

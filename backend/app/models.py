@@ -59,6 +59,8 @@ class Client(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True)
     agency: Optional[str] = None  # 既定の代理店（マスタで紐づけ）
+    address: Optional[str] = None  # 本社所在地（郵便番号付き）
+    url: Optional[str] = None      # 公式サイトURL
     active: bool = True
     created_at: datetime = Field(default_factory=datetime.utcnow)
 

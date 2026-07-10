@@ -35,6 +35,8 @@ def create_master(kind: str, data: MasterIn, session: Session = Depends(get_sess
     row = model(name=name, active=data.active)
     if model is Client:
         row.agency = (data.agency or "").strip() or None
+        row.address = (data.address or "").strip() or None
+        row.url = (data.url or "").strip() or None
     session.add(row)
     session.commit()
     session.refresh(row)
@@ -55,6 +57,8 @@ def update_master(kind: str, row_id: int, data: MasterIn, session: Session = Dep
     row.active = data.active
     if model is Client:
         row.agency = (data.agency or "").strip() or None
+        row.address = (data.address or "").strip() or None
+        row.url = (data.url or "").strip() or None
     session.add(row)
     session.commit()
     session.refresh(row)

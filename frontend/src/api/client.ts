@@ -95,8 +95,14 @@ export const api = {
   listMasters: (kind: MasterKind) => req<Master[]>(`/api/masters/${kind}`),
   createMaster: (kind: MasterKind, name: string, agency?: string | null) =>
     req<Master>(`/api/masters/${kind}`, { method: "POST", body: JSON.stringify({ name, agency }) }),
-  updateMaster: (kind: MasterKind, id: number, name: string, active: boolean, agency?: string | null) =>
-    req<Master>(`/api/masters/${kind}/${id}`, { method: "PUT", body: JSON.stringify({ name, active, agency }) }),
+  updateMaster: (
+    kind: MasterKind, id: number, name: string, active: boolean,
+    agency?: string | null, address?: string | null, url?: string | null,
+  ) =>
+    req<Master>(`/api/masters/${kind}/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ name, active, agency, address, url }),
+    }),
   deleteMaster: (kind: MasterKind, id: number) =>
     req<void>(`/api/masters/${kind}/${id}`, { method: "DELETE" }),
 

@@ -157,7 +157,14 @@ export interface Analysis {
   yoy: YoyCompare;
 }
 
-export interface Master { id: number; name: string; active: boolean; agency?: string | null; }
+export interface Master {
+  id: number;
+  name: string;
+  active: boolean;
+  agency?: string | null;
+  address?: string | null;
+  url?: string | null;
+}
 export type MasterKind = "clients" | "instructors" | "agencies";
 
 export interface MonthlySummary {

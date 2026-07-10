@@ -31,7 +31,10 @@ export default function Masters() {
   }
   async function rename(m: Master) {
     const name = window.prompt("新しい名称", m.name);
-    if (name && name.trim()) { await api.updateMaster(kind, m.id, name.trim(), m.active, m.agency); load(); }
+    if (name && name.trim()) {
+      await api.updateMaster(kind, m.id, name.trim(), m.active, m.agency, m.address, m.url);
+      load();
+    }
   }
   async function remove(m: Master) {
     if (window.confirm(`「${m.name}」を削除しますか？`)) { await api.deleteMaster(kind, m.id); load(); }
@@ -39,7 +42,19 @@ export default function Masters() {
   async function saveAgency(m: Master, agency: string) {
     const v = agency.trim();
     if ((m.agency ?? "") === v) return;
-    try { await api.updateMaster("clients", m.id, m.name, m.active, v || null); load(); }
+    try { await api.updateMaster("clients", m.id, m.name, m.active, v || null, m.address, m.url); load(); }
+    catch (e) { setError((e as Error).message); }
+  }
+  async function saveAddress(m: Master, address: string) {
+    const v = address.trim();
+    if ((m.address ?? "") === v) return;
+    try { await api.updateMaster("clients", m.id, m.name, m.active, m.agency, v || null, m.url); load(); }
+    catch (e) { setError((e as Error).message); }
+  }
+  async function saveUrl(m: Master, url: string) {
+    const v = url.trim();
+    if ((m.url ?? "") === v) return;
+    try { await api.updateMaster("clients", m.id, m.name, m.active, m.agency, m.address, v || null); load(); }
     catch (e) { setError((e as Error).message); }
   }
 
@@ -66,6 +81,8 @@ export default function Masters() {
               <tr>
                 <th>名称</th>
                 {kind === "clients" && <th>代理店</th>}
+                {kind === "clients" && <th>住所</th>}
+                {kind === "clients" && <th>URL</th>}
                 <th>状態</th><th></th>
               </tr>
             </thead>
@@ -77,11 +94,39 @@ export default function Masters() {
                     <td>
                       <input
                         list="agencyOptions"
-                        style={{ fontSize: 13, padding: "4px 8px", minWidth: 180 }}
+                        style={{ fontSize: 13, padding: "4px 8px", minWidth: 160 }}
                         placeholder="代理店を選択/入力"
                         defaultValue={m.agency ?? ""}
                         onBlur={(e) => saveAgency(m, e.target.value)}
                       />
+                    </td>
+                  )}
+                  {kind === "clients" && (
+                    <td>
+                      <input
+                        key={`addr-${m.id}-${m.address ?? ""}`}
+                        style={{ fontSize: 13, padding: "4px 8px", minWidth: 240 }}
+                        placeholder="本社所在地（郵便番号付き）"
+                        defaultValue={m.address ?? ""}
+                        onBlur={(e) => saveAddress(m, e.target.value)}
+                      />
+                    </td>
+                  )}
+                  {kind === "clients" && (
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <input
+                          key={`url-${m.id}-${m.url ?? ""}`}
+                          style={{ fontSize: 13, padding: "4px 8px", minWidth: 200 }}
+                          placeholder="https://…"
+                          defaultValue={m.url ?? ""}
+                          onBlur={(e) => saveUrl(m, e.target.value)}
+                        />
+                        {m.url && (
+                          <a href={m.url} target="_blank" rel="noreferrer"
+                            title="サイトを開く" style={{ fontSize: 13 }}>↗</a>
+                        )}
+                      </div>
                     </td>
                   )}
                   <td>{m.active ? "有効" : "無効"}</td>
