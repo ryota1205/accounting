@@ -173,6 +173,8 @@ export interface AnnualSummary {
   rows: AnnualRow[];
   month_totals: number[];
   grand_total: number;
+  fixed_costs: number[];
+  fixed_total: number;
   prev_month_totals: number[];
   prev_grand_total: number;
   prev_has_data: boolean;

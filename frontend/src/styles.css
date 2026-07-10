@@ -163,6 +163,8 @@ td.num, th.num { text-align: right; }
 /* 左上の角（見出し×企業名）は最前面 */
 .flush thead th:first-child { z-index: 3; }
 .flush tbody td:first-child { font-weight: 600; }
+/* 月カラム（合計列＝最終セルを除く数値列）は中央寄せ。企業名は左・合計は右のまま */
+.flush th.num:not(:last-child), .flush td.num:not(:last-child) { text-align: center; }
 /* 高さ制限つきスクロール領域（横スクロールバーを画面内に常時表示） */
 .table-scroll { overflow: auto; }
 .table-scroll table { margin: 0; }

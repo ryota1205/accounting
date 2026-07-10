@@ -60,6 +60,13 @@ export default function AnnualMatrix() {
               {data.month_totals.map((m, i) => <th key={i} className="num">{yen(m)}</th>)}
               <th className="num">{yen(data.grand_total)}</th>
             </tr>
+            <tr>
+              <th>固定費との±</th>
+              {data.month_totals.map((m, i) => (
+                <th key={i} className="num">{diff(m, data.fixed_costs[i])}</th>
+              ))}
+              <th className="num">{diff(data.grand_total, data.fixed_total)}</th>
+            </tr>
             {data.prev_has_data && (
               <tr>
                 <th>前年対比</th>

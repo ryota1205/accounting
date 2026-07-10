@@ -60,6 +60,10 @@ def annual(fiscal_year: int, session: Session = Depends(get_session)):
             month_totals[i] += buckets[i]
         rows.append({"client": c, "months": buckets, "total": sum(buckets)})
 
+    # 月別の固定費（月計との差額＝固定費をどれだけ上回ったか表示用）
+    fixed_costs = [_month_fixed_cost(session, y, m)
+                   for (y, m) in calc.fiscal_months(fiscal_year)]
+
     # 前年同年度の月計（前年対比の差額表示用）
     prev = _deals_in_fy(session, fiscal_year - 1)
     prev_has_data = len(prev) > 0
@@ -72,6 +76,8 @@ def annual(fiscal_year: int, session: Session = Depends(get_session)):
         "rows": rows,
         "month_totals": month_totals,
         "grand_total": sum(month_totals),
+        "fixed_costs": fixed_costs,
+        "fixed_total": sum(fixed_costs),
         "prev_month_totals": prev_month_totals,
         "prev_grand_total": sum(prev_month_totals),
         "prev_has_data": prev_has_data,
