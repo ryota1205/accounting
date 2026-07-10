@@ -21,6 +21,16 @@ const EMPTY: DealInput = {
   paid_amount: 0, payment_status: "uninvoiced", paid_on: "",
 };
 
+// 実施日(YYYY-MM-DD)から売上計上月＝その月の月末日(YYYY-MM-DD)を求める。
+// 集計・グラフは revenue_month で行うため、実施日変更時にこれを追従させる。
+function monthEndOf(iso: string): string {
+  if (!iso) return "";
+  const [y, m] = iso.split("-").map(Number);
+  if (!y || !m) return "";
+  const last = new Date(y, m, 0).getDate(); // m月0日 = m月の末日
+  return `${y}-${String(m).padStart(2, "0")}-${String(last).padStart(2, "0")}`;
+}
+
 // 金額入力（カンマ区切り）
 function MoneyInput({ value, onChange }: { value: number; onChange: (n: number) => void }) {
   return (
@@ -165,7 +175,11 @@ export default function DealForm() {
           <MasterField kind="instructors" label="講師" value={form.instructor ?? ""}
             onChange={(v) => set("instructor", v)} options={instructors} />
           <div className="field"><label className="req">実施予定日</label>
-            <input type="date" value={form.held_on} onChange={(e) => set("held_on", e.target.value)} /></div>
+            <input type="date" value={form.held_on}
+              onChange={(e) => setForm((f) => ({
+                ...f, held_on: e.target.value, revenue_month: monthEndOf(e.target.value),
+              }))} />
+            <span className="hint">売上計上月＝実施日の月末で自動集計します</span></div>
           <div className="field"><label>研修費用</label>
             <MoneyInput value={form.fee} onChange={(n) => set("fee", n)} /></div>
           <div className="field"><label>講師料</label>
