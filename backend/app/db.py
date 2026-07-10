@@ -57,6 +57,8 @@ def _run_migrations() -> None:
             conn.execute(text("ALTER TABLE client ADD COLUMN address VARCHAR"))
         if client_cols and "url" not in client_cols:
             conn.execute(text("ALTER TABLE client ADD COLUMN url VARCHAR"))
+        if client_cols and "industry" not in client_cols:
+            conn.execute(text("ALTER TABLE client ADD COLUMN industry VARCHAR"))
 
         # user テーブルに password_changed 列を追加（既存DB向け）
         user_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(user)"))]

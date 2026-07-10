@@ -98,10 +98,11 @@ export const api = {
   updateMaster: (
     kind: MasterKind, id: number, name: string, active: boolean,
     agency?: string | null, address?: string | null, url?: string | null,
+    industry?: string | null,
   ) =>
     req<Master>(`/api/masters/${kind}/${id}`, {
       method: "PUT",
-      body: JSON.stringify({ name, active, agency, address, url }),
+      body: JSON.stringify({ name, active, agency, address, url, industry }),
     }),
   deleteMaster: (kind: MasterKind, id: number) =>
     req<void>(`/api/masters/${kind}/${id}`, { method: "DELETE" }),

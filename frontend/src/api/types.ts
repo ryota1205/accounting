@@ -164,6 +164,7 @@ export interface Master {
   agency?: string | null;
   address?: string | null;
   url?: string | null;
+  industry?: string | null;
 }
 export type MasterKind = "clients" | "instructors" | "agencies";
 
