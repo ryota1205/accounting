@@ -64,6 +64,7 @@ export function Layout({ title, children, actions }: {
   const { alertCount } = useAlerts();
   const { user, logout, refreshUser } = useAuth();
   const [pwOpen, setPwOpen] = useState(false);
+  const [navOpen, setNavOpen] = useState(false); // スマホ用ドロワーの開閉
   const forcePw = !!user?.must_change_password;
 
   // ロールでメニューを出し分け（空になったグループは隠す）
@@ -73,12 +74,14 @@ export function Layout({ title, children, actions }: {
 
   return (
     <div className="app">
-      <aside className="side">
+      {/* スマホでメニューを開いたときの暗幕（タップで閉じる） */}
+      <div className={`nav-backdrop ${navOpen ? "show" : ""}`} onClick={() => setNavOpen(false)} />
+      <aside className={`side ${navOpen ? "open" : ""}`}>
         <div className="brand">
           <span className="brand-mark">研</span>
           <span className="brand-text">研修売上管理</span>
         </div>
-        <nav>
+        <nav onClick={() => setNavOpen(false)}>
           {groups.map((g, gi) => (
             <div className="nav-group" key={gi}>
               {g.title && <div className="nav-group-title">{g.title}</div>}
@@ -98,6 +101,11 @@ export function Layout({ title, children, actions }: {
       </aside>
       <main className="main">
         <div className="topbar">
+          {/* スマホ専用ハンバーガー（CSSで表示制御） */}
+          <button className="nav-toggle" aria-label="メニューを開く" onClick={() => setNavOpen(true)}>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor"
+              strokeWidth="2" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
           <h2>{title}</h2>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             {actions}

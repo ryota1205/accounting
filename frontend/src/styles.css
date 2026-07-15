@@ -247,3 +247,39 @@ td.num, th.num { text-align: right; }
 .seg { display: inline-flex; border: 1px solid var(--border, #e2e8f0); border-radius: 6px; overflow: hidden; }
 .seg button { border: none; background: #fff; padding: 6px 12px; font-size: 12px; cursor: pointer; }
 .seg button.active { background: #2563eb; color: #fff; }
+
+/* ===== モバイル対応 ===== */
+/* ハンバーガーと暗幕は既定（PC）では非表示。スマホのみ @media で表示する */
+.nav-toggle { display: none; align-items: center; justify-content: center;
+  width: 38px; height: 38px; padding: 0; flex: 0 0 auto;
+  background: #fff; color: var(--text); border: 1px solid var(--border);
+  border-radius: 9px; cursor: pointer; }
+.nav-backdrop { display: none; }
+
+/* 640px以下（スマホ）のみドロワー化。タブレット(768〜1024px)は常時サイドバー表示のまま */
+@media (max-width: 640px) {
+  /* サイドバーを画面外へ隠す引き出し（ドロワー）に。開くと右へスライドイン */
+  .side {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 60;
+    flex-basis: 240px; width: 240px; overflow-y: auto;
+    transform: translateX(-100%); transition: transform .22s ease;
+  }
+  .side.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,.5); }
+  /* メニューを開いたときの暗幕（タップで閉じる） */
+  .nav-backdrop.show { display: block; position: fixed; inset: 0; z-index: 55;
+    background: rgba(15,23,42,.5); }
+  /* 本文は全幅・余白控えめ */
+  .main { padding: 14px; }
+  /* トップバー：折り返し可＋ハンバーガー表示 */
+  .nav-toggle { display: inline-flex; }
+  .topbar { flex-wrap: wrap; gap: 10px; }
+  .topbar h2 { font-size: 17px; flex: 1 1 auto; min-width: 0; }
+  /* フォームは1カラムに（2カラムだと横にはみ出す） */
+  .form-grid { grid-template-columns: 1fr; }
+  /* 素の.panel内テーブルの横あふれ保険（.matrix/.flushは元から対応済み） */
+  .panel:not(.flush) { overflow-x: auto; }
+  /* カードは最小幅を下げて2列を維持しやすく */
+  .cards { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  /* 年間表などの固定高さドロワーは画面に収める */
+  .flush { max-height: calc(100vh - 210px); }
+}
