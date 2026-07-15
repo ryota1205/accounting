@@ -84,6 +84,12 @@ class Setting(SQLModel, table=True):
     fiscal_year: int = Field(primary_key=True)
     monthly_fixed_cost: int = 0
     opening_balance: int = 0          # 年度開始時点の手元資金（資金繰り画面の起点）
+    # 分析画面「人件費の目安」の経営前提（年度別）
+    labor_share: float = 0.5          # 労働分配率（人件費÷粗利）0〜1
+    headcount: float = 0              # 従業員数（役員除く）。0/空なら1人当たり非表示
+    bonus_months: float = 2.0         # 賞与＝月給の何ヶ月分（年間）
+    exec_comp_annual: int = 0         # 役員報酬 年額（別枠・任意）
+    benchmarks_json: Optional[str] = None  # 経営指標のゾーン閾値の上書き（JSON文字列）。空なら既定値
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 

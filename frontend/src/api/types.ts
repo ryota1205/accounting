@@ -213,7 +213,25 @@ export interface PLSummary {
   top_clients: TopClient[];
 }
 
-export interface Setting { fiscal_year: number; monthly_fixed_cost: number; opening_balance: number; }
+export interface Setting {
+  fiscal_year: number;
+  monthly_fixed_cost: number;
+  opening_balance: number;
+  labor_share: number;        // 労働分配率（0〜1）
+  headcount: number;          // 従業員数（役員除く）
+  bonus_months: number;       // 賞与＝月給の何ヶ月分（年間）
+  exec_comp_annual: number;   // 役員報酬 年額（別枠）
+  benchmarks_json?: string | null;  // ゾーン閾値の上書き（JSON文字列）
+}
+
+// 分析画面の経営前提を保存するときの部分更新ペイロード
+export interface AnalysisSettingIn {
+  labor_share?: number;
+  headcount?: number;
+  bonus_months?: number;
+  exec_comp_annual?: number;
+  benchmarks_json?: string | null;
+}
 
 export interface PaymentItem { id: number; name: string; sort_order: number; active: boolean; }
 

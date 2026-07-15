@@ -51,6 +51,16 @@ def put_settings(fiscal_year: int, data: SettingIn, session: Session = Depends(g
         row.monthly_fixed_cost = data.monthly_fixed_cost
     if data.opening_balance is not None:
         row.opening_balance = data.opening_balance
+    if data.labor_share is not None:
+        row.labor_share = data.labor_share
+    if data.headcount is not None:
+        row.headcount = data.headcount
+    if data.bonus_months is not None:
+        row.bonus_months = data.bonus_months
+    if data.exec_comp_annual is not None:
+        row.exec_comp_annual = data.exec_comp_annual
+    if data.benchmarks_json is not None:
+        row.benchmarks_json = data.benchmarks_json
     row.updated_at = datetime.utcnow()
     session.add(row)
     session.commit()

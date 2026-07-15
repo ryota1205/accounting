@@ -2,7 +2,7 @@ import {
   Deal, DealInput, Master, MasterKind,
   MonthlySummary, AnnualSummary, ByRow, PLSummary, Setting, ConfidenceRate,
   MonthSummary, MonthlyFixedCost, SalesFunnel, SalesActivity, Analysis, AuthUser,
-  RecurringSummary, PaymentItem, ScheduleMatrix, CashFlowSummary,
+  RecurringSummary, PaymentItem, ScheduleMatrix, CashFlowSummary, AnalysisSettingIn,
 } from "./types";
 
 // ===== API接続先 =====
@@ -116,6 +116,9 @@ export const api = {
   getSetting: (fy: number) => req<Setting>(`/api/settings/${fy}`),
   putSetting: (fy: number, monthly_fixed_cost: number) =>
     req<Setting>(`/api/settings/${fy}`, { method: "PUT", body: JSON.stringify({ monthly_fixed_cost }) }),
+  // 分析画面の経営前提・ゾーン閾値の部分更新
+  putAnalysisSetting: (fy: number, data: AnalysisSettingIn) =>
+    req<Setting>(`/api/settings/${fy}`, { method: "PUT", body: JSON.stringify(data) }),
 
   listPayments: (status: string, fy: number) =>
     req<Deal[]>(`/api/payments${qs({ status, fiscal_year: fy })}`),

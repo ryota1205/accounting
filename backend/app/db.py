@@ -80,6 +80,18 @@ def _run_migrations() -> None:
         setting_cols = [row[1] for row in conn.execute(text("PRAGMA table_info(setting)"))]
         if setting_cols and "opening_balance" not in setting_cols:
             conn.execute(text("ALTER TABLE setting ADD COLUMN opening_balance INTEGER DEFAULT 0"))
+        # 分析画面「人件費の目安」用の経営前提（既存DB向け）
+        setting_add = {
+            "labor_share": "FLOAT DEFAULT 0.5",
+            "headcount": "FLOAT DEFAULT 0",
+            "bonus_months": "FLOAT DEFAULT 2.0",
+            "exec_comp_annual": "INTEGER DEFAULT 0",
+            "benchmarks_json": "VARCHAR",
+        }
+        if setting_cols:
+            for name, ddl in setting_add.items():
+                if name not in setting_cols:
+                    conn.execute(text(f"ALTER TABLE setting ADD COLUMN {name} {ddl}"))
         conn.commit()
 
     # 受注確度の初期掛け率を投入（無ければ）
