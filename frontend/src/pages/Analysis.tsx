@@ -123,7 +123,7 @@ function EditModal({ fy, settings, cats, onClose, onSaved }: {
   const [laborPct, setLaborPct] = useState(String(Math.round(settings.labor_share * 1000) / 10));
   const [headcount, setHeadcount] = useState(String(settings.headcount || 0));
   const [bonus, setBonus] = useState(String(settings.bonus_months ?? 2));
-  const [execYen, setExecYen] = useState(String(settings.exec_comp_annual || 0));
+  const [execYen, setExecYen] = useState(withCommas(String(settings.exec_comp_annual || 0)));
   // 閾値ドラフト：key -> { bound -> 表示値(文字列) }
   const boundsOf = (b: Benchmark): (keyof Benchmark)[] =>
     b.dir === "higher" ? ["warnLo", "safeLo"]
@@ -167,7 +167,7 @@ function EditModal({ fy, settings, cats, onClose, onSaved }: {
         labor_share: Math.max(0, Math.min(1, (Number(laborPct) || 0) / 100)),
         headcount: Math.max(0, Number(headcount) || 0),
         bonus_months: Math.max(0, Number(bonus) || 0),
-        exec_comp_annual: Math.max(0, Math.round(Number(execYen) || 0)),
+        exec_comp_annual: Math.max(0, Math.round(noCommas(execYen))),
         benchmarks_json: JSON.stringify(overrides),
       });
       onSaved();
@@ -199,8 +199,8 @@ function EditModal({ fy, settings, cats, onClose, onSaved }: {
           </div>
           <div className="field">
             <label>役員報酬 年額（円・別枠／任意）</label>
-            <input value={execYen} onChange={(e) => setExecYen(e.target.value)} inputMode="numeric" />
-            <span className="hint">= {yen(Number(execYen) || 0)}（人件費総額から差し引きます。不要なら0）</span>
+            <input value={execYen} onChange={(e) => setExecYen(withCommas(e.target.value))} inputMode="numeric" />
+            <span className="hint">= {yen(noCommas(execYen))}（人件費総額から差し引きます。不要なら0）</span>
           </div>
         </div>
 
@@ -240,6 +240,14 @@ function EditModal({ fy, settings, cats, onClose, onSaved }: {
 const BOUND_LABEL: Record<string, string> = {
   warnLo: "危険境界(下)", safeLo: "安全下限", safeHi: "安全上限", warnHi: "危険境界(上)",
 };
+
+// 入力用：数字だけ取り出して3桁カンマ区切りに整形（"18000000" -> "18,000,000"）
+const withCommas = (s: string) => {
+  const d = s.replace(/[^\d]/g, "");
+  return d === "" ? "" : Number(d).toLocaleString("en-US");
+};
+// カンマ入り文字列を数値に戻す
+const noCommas = (s: string) => Number(s.replace(/,/g, "")) || 0;
 
 export default function Analysis() {
   const { fiscalYear } = useFiscalYear();
