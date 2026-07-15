@@ -119,11 +119,11 @@ function EditModal({ fy, settings, cats, onClose, onSaved }: {
   fy: number; settings: Setting; cats: Category[];
   onClose: () => void; onSaved: () => void;
 }) {
-  // 経営前提（表示単位：労働分配率=%、役員報酬=万円）
+  // 経営前提（表示単位：労働分配率=%、役員報酬=円）
   const [laborPct, setLaborPct] = useState(String(Math.round(settings.labor_share * 1000) / 10));
   const [headcount, setHeadcount] = useState(String(settings.headcount || 0));
   const [bonus, setBonus] = useState(String(settings.bonus_months ?? 2));
-  const [execMan, setExecMan] = useState(String(Math.round((settings.exec_comp_annual || 0) / 10000)));
+  const [execYen, setExecYen] = useState(String(settings.exec_comp_annual || 0));
   // 閾値ドラフト：key -> { bound -> 表示値(文字列) }
   const boundsOf = (b: Benchmark): (keyof Benchmark)[] =>
     b.dir === "higher" ? ["warnLo", "safeLo"]
@@ -167,7 +167,7 @@ function EditModal({ fy, settings, cats, onClose, onSaved }: {
         labor_share: Math.max(0, Math.min(1, (Number(laborPct) || 0) / 100)),
         headcount: Math.max(0, Number(headcount) || 0),
         bonus_months: Math.max(0, Number(bonus) || 0),
-        exec_comp_annual: Math.max(0, Math.round((Number(execMan) || 0) * 10000)),
+        exec_comp_annual: Math.max(0, Math.round(Number(execYen) || 0)),
         benchmarks_json: JSON.stringify(overrides),
       });
       onSaved();
@@ -198,8 +198,9 @@ function EditModal({ fy, settings, cats, onClose, onSaved }: {
             <input value={bonus} onChange={(e) => setBonus(e.target.value)} inputMode="decimal" />
           </div>
           <div className="field">
-            <label>役員報酬 年額（万円・別枠）</label>
-            <input value={execMan} onChange={(e) => setExecMan(e.target.value)} inputMode="decimal" />
+            <label>役員報酬 年額（円・別枠／任意）</label>
+            <input value={execYen} onChange={(e) => setExecYen(e.target.value)} inputMode="numeric" />
+            <span className="hint">= {yen(Number(execYen) || 0)}（人件費総額から差し引きます。不要なら0）</span>
           </div>
         </div>
 
@@ -400,9 +401,16 @@ export default function Analysis() {
         </div>
         <div className="hint" style={{ marginTop: 0 }}>
           労働分配率 {pct(settings.labor_share, 0)}／従業員数 {settings.headcount || "未設定"}人／
-          賞与 {settings.bonus_months}ヶ月／役員報酬 {settings.exec_comp_annual ? man(settings.exec_comp_annual) : "なし"}。
+          賞与 {settings.bonus_months}ヶ月／役員報酬 {settings.exec_comp_annual ? yen(settings.exec_comp_annual) : "なし"}。
           粗利×労働分配率を人件費原資とした目安です（確定値ではありません）。
         </div>
+        {labor && labor.actual.total > 0 && labor.actual.employeePool === 0 && settings.exec_comp_annual > 0 && (
+          <div className="alert-banner" style={{ marginTop: 10, marginBottom: 0 }}>
+            <span className="alert-banner-icon">!</span>
+            <span>役員報酬（{yen(settings.exec_comp_annual)}）が人件費原資（{yen(labor.actual.total)}）を上回っているため、
+              社員原資が0になっています。「前提を編集」で役員報酬の金額（円単位）をご確認ください。</span>
+          </div>
+        )}
         <table>
           <thead><tr>
             <th>項目</th><th className="num">実績ベース</th><th className="num">年間見込みベース</th>
