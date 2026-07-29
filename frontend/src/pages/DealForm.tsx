@@ -271,7 +271,8 @@ export default function DealForm() {
                     </select></div>
                   <div className="field"><label>請求金額</label>
                     <MoneyInputN value={form.invoice_amount} onChange={(n) => set("invoice_amount", n)}
-                      placeholder="未設定=請求額を使用" /></div>
+                      placeholder="未設定=請求額を使用" />
+                    <span className="hint">通常は空欄のまま＝自動計算の税込請求額を使用。実際の請求書の金額が異なる場合のみ税込で入力</span></div>
                   <div className="field"><label>入金済金額</label>
                     <MoneyInput value={form.paid_amount} onChange={(n) => set("paid_amount", n)} /></div>
                 </div>
