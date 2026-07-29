@@ -179,6 +179,10 @@ export default function DealForm() {
             <select value={form.project_status} onChange={(e) => set("project_status", e.target.value)}>
               {PROJECT_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
             </select></div>
+          {form.project_status === "失注" && (
+            <div className="field"><label>失注理由</label>
+              <input value={form.lost_reason ?? ""} onChange={(e) => set("lost_reason", e.target.value)} /></div>
+          )}
         </div>
 
         <h3 style={{ marginTop: 18 }}>案件情報（詳細）</h3>
@@ -196,16 +200,10 @@ export default function DealForm() {
               </div>
             </div>
 
-            <h3 style={{ marginTop: 18 }}>金額（詳細）</h3>
+            <h3 style={{ marginTop: 18 }}>金額（クライアントへの請求）</h3>
             <div className="form-grid">
               <div className="field"><label>研修費用</label>
                 <MoneyInput value={form.fee} onChange={(n) => set("fee", n)} /></div>
-              <div className="field"><label>講師料</label>
-                <MoneyInput value={form.instructor_fee} onChange={(n) => set("instructor_fee", n)} /></div>
-              {form.project_status === "失注" && (
-                <div className="field"><label>失注理由</label>
-                  <input value={form.lost_reason ?? ""} onChange={(e) => set("lost_reason", e.target.value)} /></div>
-              )}
               <div className="field"><label>交通費</label>
                 <MoneyInput value={form.transport} onChange={(n) => set("transport", n)} /></div>
               <div className="field"><label>その他・経費</label>
@@ -214,6 +212,12 @@ export default function DealForm() {
                 <MoneyInputN value={form.invoice_amount ?? billingShown}
                   onChange={(n) => set("invoice_amount", n === billingShown ? null : n)} />
                 <span className="hint">研修費用・交通費・その他から自動計算。実際の請求書の金額が異なる場合のみ書き換え（空にすると自動に戻る）</span></div>
+            </div>
+
+            <h3 style={{ marginTop: 18 }}>原価（講師への支払い）</h3>
+            <div className="form-grid">
+              <div className="field"><label>講師料</label>
+                <MoneyInput value={form.instructor_fee} onChange={(n) => set("instructor_fee", n)} /></div>
             </div>
 
             {editing && (
