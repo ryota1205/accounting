@@ -210,6 +210,10 @@ export default function DealForm() {
                 <MoneyInput value={form.transport} onChange={(n) => set("transport", n)} /></div>
               <div className="field"><label>その他・経費</label>
                 <MoneyInput value={form.other} onChange={(n) => set("other", n)} /></div>
+              <div className="field"><label>請求金額（税込）</label>
+                <MoneyInputN value={form.invoice_amount ?? billingShown}
+                  onChange={(n) => set("invoice_amount", n === billingShown ? null : n)} />
+                <span className="hint">研修費用・交通費・その他から自動計算。実際の請求書の金額が異なる場合のみ書き換え（空にすると自動に戻る）</span></div>
             </div>
 
             {editing && (
@@ -229,10 +233,6 @@ export default function DealForm() {
                         <option key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</option>
                       ))}
                     </select></div>
-                  <div className="field"><label>請求金額</label>
-                    <MoneyInputN value={form.invoice_amount} onChange={(n) => set("invoice_amount", n)}
-                      placeholder="未設定=請求額を使用" />
-                    <span className="hint">通常は空欄のまま＝自動計算の税込請求額を使用。実際の請求書の金額が異なる場合のみ税込で入力</span></div>
                   <div className="field"><label>入金済金額</label>
                     <MoneyInput value={form.paid_amount} onChange={(n) => set("paid_amount", n)} /></div>
                 </div>
@@ -241,9 +241,9 @@ export default function DealForm() {
 
         <h3 style={{ marginTop: 18 }}>自動計算</h3>
         <div className="cards">
+          <div className="card"><div className="label">売上金額(税抜)</div><div className="value">{yen(sales)}</div></div>
           <div className="card"><div className="label">消費税</div><div className="value">{yen(taxShown)}</div></div>
           <div className="card"><div className="label">請求額</div><div className="value">{yen(billingShown)}</div></div>
-          <div className="card"><div className="label">売上金額(税抜)</div><div className="value">{yen(sales)}</div></div>
           <div className="card"><div className="label">粗利額</div><div className="value">{yen(gross)}</div></div>
           <div className="card"><div className="label">粗利率</div><div className="value">{pct(grossRate)}</div></div>
         </div>
