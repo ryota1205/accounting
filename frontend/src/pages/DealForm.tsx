@@ -126,7 +126,9 @@ export default function DealForm() {
   const gross = sales - cost;
   const grossRate = sales ? gross / sales : 0;
   const opProfit = gross - (form.allocated_fixed_cost ?? 0);
-  const weighted = Math.round((form.expected_sales_amount || form.fee) *
+  // 見込み売上の未入力(0)補完は新規登録時のみ（編集保存で既存データを書き換えない）
+  const effectiveExpected = editing ? form.expected_sales_amount : (form.expected_sales_amount || form.fee);
+  const weighted = Math.round(effectiveExpected *
     (form.confidence_rank ? rates[form.confidence_rank] ?? 0 : 0));
 
   async function submit(e: FormEvent) {
@@ -143,8 +145,8 @@ export default function DealForm() {
       revenue_month: clean(form.revenue_month), project_name: clean(form.project_name),
       training_theme: clean(form.training_theme), lost_reason: clean(form.lost_reason),
       invoice_date: clean(form.invoice_date), paid_on: clean(form.paid_on),
-      // 見込み売上が未入力(0)なら研修費用と同額を保存（確度加重見込みの母数を欠かさない）
-      expected_sales_amount: form.expected_sales_amount || form.fee,
+      // 新規登録時のみ: 見込み売上が未入力(0)なら研修費用と同額を保存（確度加重見込みの母数を欠かさない）
+      expected_sales_amount: effectiveExpected,
     };
     try {
       if (editing) await api.updateDeal(Number(id), payload);
@@ -234,7 +236,7 @@ export default function DealForm() {
                 </select></div>
               <div className="field"><label>見込み売上</label>
                 <MoneyInput value={form.expected_sales_amount} onChange={(n) => set("expected_sales_amount", n)} />
-                <span className="hint">未入力なら研修費用と同額で保存します</span></div>
+                {!editing && <span className="hint">未入力なら研修費用と同額で保存します</span>}</div>
               {(editing || form.project_status === "失注") && (
                 <div className="field"><label>失注理由</label>
                   <input value={form.lost_reason ?? ""} onChange={(e) => set("lost_reason", e.target.value)} /></div>
