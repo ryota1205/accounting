@@ -177,10 +177,6 @@ export default function DealForm() {
                 ...f, held_on: e.target.value, revenue_month: monthEndOf(e.target.value),
               }))} />
             <span className="hint">売上計上月＝実施日の月末で自動集計します</span></div>
-          <div className="field"><label>研修費用</label>
-            <MoneyInput value={form.fee} onChange={(n) => set("fee", n)} /></div>
-          <div className="field"><label>講師料</label>
-            <MoneyInput value={form.instructor_fee} onChange={(n) => set("instructor_fee", n)} /></div>
           <div className="field"><label>案件ステータス</label>
             <select value={form.project_status} onChange={(e) => set("project_status", e.target.value)}>
               {PROJECT_STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
@@ -202,7 +198,7 @@ export default function DealForm() {
           </span>
           {!showDetails && (
             <span style={{ color: "var(--muted)", fontSize: 12 }}>
-              代理店／見込み売上／交通費・原価／備考{editing ? "／入金情報" : ""}
+              研修費用・講師料／代理店／見込み売上・交通費・原価／備考{editing ? "／入金情報" : ""}
             </span>
           )}
         </button>
@@ -226,6 +222,10 @@ export default function DealForm() {
 
             <h3 style={{ marginTop: 18 }}>金額（詳細）</h3>
             <div className="form-grid">
+              <div className="field"><label>研修費用</label>
+                <MoneyInput value={form.fee} onChange={(n) => set("fee", n)} /></div>
+              <div className="field"><label>講師料</label>
+                <MoneyInput value={form.instructor_fee} onChange={(n) => set("instructor_fee", n)} /></div>
               <div className="field"><label>見込み売上</label>
                 <MoneyInput value={form.expected_sales_amount} onChange={(n) => set("expected_sales_amount", n)} />
                 {!editing && <span className="hint">未入力なら研修費用と同額で保存します</span>}</div>
