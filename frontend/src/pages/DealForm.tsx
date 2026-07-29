@@ -213,13 +213,6 @@ export default function DealForm() {
             <div className="form-grid">
               <MasterField kind="agencies" label="代理店" value={form.agency ?? ""}
                 onChange={(v) => set("agency", v)} options={agencies} />
-              {editing && form.training_name && (
-                <div className="field">
-                  <label>研修名（旧項目）</label>
-                  <input value={form.training_name ?? ""} onChange={(e) => set("training_name", e.target.value)} />
-                  <span className="hint">現在は「研修テーマ」に統合。既存データのみ表示しています。</span>
-                </div>
-              )}
               <div className="field">
                 <label>新規／既存／リピート</label>
                 <select value={form.customer_type ?? ""}
@@ -236,7 +229,7 @@ export default function DealForm() {
               <div className="field"><label>見込み売上</label>
                 <MoneyInput value={form.expected_sales_amount} onChange={(n) => set("expected_sales_amount", n)} />
                 {!editing && <span className="hint">未入力なら研修費用と同額で保存します</span>}</div>
-              {(editing || form.project_status === "失注") && (
+              {form.project_status === "失注" && (
                 <div className="field"><label>失注理由</label>
                   <input value={form.lost_reason ?? ""} onChange={(e) => set("lost_reason", e.target.value)} /></div>
               )}
