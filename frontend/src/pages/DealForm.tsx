@@ -84,8 +84,6 @@ export default function DealForm() {
   const [loading, setLoading] = useState(editing);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  // 詳細項目の開閉（新規は閉じてシンプルに、編集は既存データが見えるよう開く）
-  const [showDetails, setShowDetails] = useState(editing);
 
   useEffect(() => {
     api.listMasters("clients").then(setClients).catch(() => {});
@@ -183,29 +181,7 @@ export default function DealForm() {
             </select></div>
         </div>
 
-        <button type="button" onClick={() => setShowDetails((v) => !v)}
-          style={{
-            marginTop: 14, width: "100%", padding: "10px 14px", cursor: "pointer",
-            background: showDetails ? "#eff6ff" : "#f8fafc",
-            color: showDetails ? "var(--primary)" : "var(--text)",
-            border: showDetails ? "1px solid #bfdbfe" : "1px dashed var(--border)",
-            borderRadius: 8,
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            gap: 10, flexWrap: "wrap", textAlign: "left", fontSize: 13,
-          }}>
-          <span style={{ fontWeight: 600 }}>
-            {showDetails ? "▲ 詳細項目を閉じる" : "▼ 詳細項目も入力する（任意）"}
-          </span>
-          {!showDetails && (
-            <span style={{ color: "var(--muted)", fontSize: 12 }}>
-              研修費用・講師料／代理店／見込み売上・交通費・原価／備考{editing ? "／入金情報" : ""}
-            </span>
-          )}
-        </button>
-
-        {showDetails && (
-          <>
-            <h3 style={{ marginTop: 18 }}>案件情報（詳細）</h3>
+        <h3 style={{ marginTop: 18 }}>案件情報（詳細）</h3>
             <div className="form-grid">
               <MasterField kind="agencies" label="代理店" value={form.agency ?? ""}
                 onChange={(v) => set("agency", v)} options={agencies} />
@@ -271,8 +247,6 @@ export default function DealForm() {
                 </div>
               </>
             )}
-          </>
-        )}
 
         <h3 style={{ marginTop: 18 }}>自動計算</h3>
         <div className="cards">
