@@ -29,7 +29,6 @@ const COLS: Col[] = [
   { key: "gross", label: "粗利", align: "num", render: (d) => yen(grossProfit(d)), sort: (d) => grossProfit(d) },
   { key: "grossRate", label: "粗利率", align: "num", render: (d) => pct(grossMarginRate(d)), sort: (d) => grossMarginRate(d) },
   { key: "project_status", label: "案件状況", align: "center", render: (d) => d.project_status, sort: (d) => d.project_status },
-  { key: "confidence", label: "確度", align: "center", render: (d) => d.confidence_rank ?? "—", sort: (d) => d.confidence_rank ?? "" },
   {
     key: "payment_status", label: "入金状況", align: "center",
     render: (d) => <span className={`badge pay ${d.payment_status}`}>{PAYMENT_STATUS_LABELS[d.payment_status]}</span>,
