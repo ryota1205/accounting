@@ -191,8 +191,10 @@ export default function DealForm() {
         <button type="button" onClick={() => setShowDetails((v) => !v)}
           style={{
             marginTop: 14, width: "100%", padding: "10px 14px", cursor: "pointer",
-            background: showDetails ? "#fff" : "#f8fafc", color: "var(--text)",
-            border: "1px dashed var(--border)", borderRadius: 8,
+            background: showDetails ? "#eff6ff" : "#f8fafc",
+            color: showDetails ? "var(--primary)" : "var(--text)",
+            border: showDetails ? "1px solid #bfdbfe" : "1px dashed var(--border)",
+            borderRadius: 8,
             display: "flex", alignItems: "center", justifyContent: "space-between",
             gap: 10, flexWrap: "wrap", textAlign: "left", fontSize: 13,
           }}>
