@@ -126,7 +126,7 @@ export default function DealForm() {
   const gross = sales - cost;
   const grossRate = sales ? gross / sales : 0;
   const opProfit = gross - (form.allocated_fixed_cost ?? 0);
-  const weighted = Math.round((form.expected_sales_amount ?? 0) *
+  const weighted = Math.round((form.expected_sales_amount || form.fee) *
     (form.confidence_rank ? rates[form.confidence_rank] ?? 0 : 0));
 
   async function submit(e: FormEvent) {
@@ -143,6 +143,8 @@ export default function DealForm() {
       revenue_month: clean(form.revenue_month), project_name: clean(form.project_name),
       training_theme: clean(form.training_theme), lost_reason: clean(form.lost_reason),
       invoice_date: clean(form.invoice_date), paid_on: clean(form.paid_on),
+      // 見込み売上が未入力(0)なら研修費用と同額を保存（確度加重見込みの母数を欠かさない）
+      expected_sales_amount: form.expected_sales_amount || form.fee,
     };
     try {
       if (editing) await api.updateDeal(Number(id), payload);
@@ -202,18 +204,13 @@ export default function DealForm() {
             <div className="form-grid">
               <MasterField kind="agencies" label="代理店" value={form.agency ?? ""}
                 onChange={(v) => set("agency", v)} options={agencies} />
-              <div className="field">
-                <label>案件名</label>
-                <input value={form.project_name ?? ""} onChange={(e) => set("project_name", e.target.value)} />
-              </div>
-              <div className="field">
-                <label>研修名</label>
-                <input value={form.training_name ?? ""} onChange={(e) => set("training_name", e.target.value)} />
-              </div>
-              <div className="field">
-                <label>サポートスタッフ</label>
-                <input value={form.support_staff ?? ""} onChange={(e) => set("support_staff", e.target.value)} />
-              </div>
+              {editing && form.training_name && (
+                <div className="field">
+                  <label>研修名（旧項目）</label>
+                  <input value={form.training_name ?? ""} onChange={(e) => set("training_name", e.target.value)} />
+                  <span className="hint">現在は「研修テーマ」に統合。既存データのみ表示しています。</span>
+                </div>
+              )}
               <div className="field">
                 <label>新規／既存／リピート</label>
                 <select value={form.customer_type ?? ""}
@@ -223,6 +220,25 @@ export default function DealForm() {
                 </select>
                 <span className="hint">未設定なら保存時に企業×研修テーマで自動判定（新規/既存/リピート）。手動選択時はその値を優先。</span>
               </div>
+            </div>
+
+            <h3 style={{ marginTop: 18 }}>受注確度</h3>
+            <div className="form-grid">
+              <div className="field"><label>受注確度</label>
+                <select value={form.confidence_rank ?? ""}
+                  onChange={(e) => set("confidence_rank", (e.target.value || null))}>
+                  <option value="">（未設定）</option>
+                  {CONFIDENCE_RANKS.map((r) => (
+                    <option key={r} value={r}>{r}（{Math.round((rates[r] ?? 0) * 100)}%）</option>
+                  ))}
+                </select></div>
+              <div className="field"><label>見込み売上</label>
+                <MoneyInput value={form.expected_sales_amount} onChange={(n) => set("expected_sales_amount", n)} />
+                <span className="hint">未入力なら研修費用と同額で保存します</span></div>
+              {(editing || form.project_status === "失注") && (
+                <div className="field"><label>失注理由</label>
+                  <input value={form.lost_reason ?? ""} onChange={(e) => set("lost_reason", e.target.value)} /></div>
+              )}
             </div>
 
             <h3 style={{ marginTop: 18 }}>金額（詳細）</h3>
@@ -237,47 +253,35 @@ export default function DealForm() {
                 <span className="hint">未入力なら講師料を原価として使用</span></div>
               <div className="field"><label>固定費配賦額</label>
                 <MoneyInput value={form.allocated_fixed_cost} onChange={(n) => set("allocated_fixed_cost", n)} /></div>
-              <div className="field"><label>見込み売上</label>
-                <MoneyInput value={form.expected_sales_amount} onChange={(n) => set("expected_sales_amount", n)} /></div>
-            </div>
-
-            <h3 style={{ marginTop: 18 }}>受注確度</h3>
-            <div className="form-grid">
-              <div className="field"><label>受注確度</label>
-                <select value={form.confidence_rank ?? ""}
-                  onChange={(e) => set("confidence_rank", (e.target.value || null))}>
-                  <option value="">（未設定）</option>
-                  {CONFIDENCE_RANKS.map((r) => (
-                    <option key={r} value={r}>{r}（{Math.round((rates[r] ?? 0) * 100)}%）</option>
-                  ))}
-                </select></div>
-              <div className="field"><label>失注理由</label>
-                <input value={form.lost_reason ?? ""} onChange={(e) => set("lost_reason", e.target.value)} /></div>
-            </div>
-
-            <h3 style={{ marginTop: 18 }}>日程・入金</h3>
-            <div className="form-grid">
-              <div className="field"><label>請求日</label>
-                <input type="date" value={form.invoice_date ?? ""} onChange={(e) => set("invoice_date", e.target.value)} /></div>
-              <div className="field"><label>入金予定日</label>
-                <input type="date" value={form.payment_due ?? ""} onChange={(e) => set("payment_due", e.target.value)} /></div>
-              <div className="field"><label>入金日</label>
-                <input type="date" value={form.paid_on ?? ""} onChange={(e) => set("paid_on", e.target.value)} /></div>
-              <div className="field"><label>入金ステータス</label>
-                <select value={form.payment_status}
-                  onChange={(e) => set("payment_status", e.target.value as PaymentStatus)}>
-                  {PAYMENT_STATUS_OPTIONS.map((s) => (
-                    <option key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</option>
-                  ))}
-                </select></div>
-              <div className="field"><label>請求金額</label>
-                <MoneyInputN value={form.invoice_amount} onChange={(n) => set("invoice_amount", n)}
-                  placeholder="未設定=請求額を使用" /></div>
-              <div className="field"><label>入金済金額</label>
-                <MoneyInput value={form.paid_amount} onChange={(n) => set("paid_amount", n)} /></div>
               <div className="field"><label>備考</label>
                 <input value={form.note ?? ""} onChange={(e) => set("note", e.target.value)} /></div>
             </div>
+
+            {editing && (
+              <>
+                <h3 style={{ marginTop: 18 }}>日程・入金</h3>
+                <div className="form-grid">
+                  <div className="field"><label>請求日</label>
+                    <input type="date" value={form.invoice_date ?? ""} onChange={(e) => set("invoice_date", e.target.value)} /></div>
+                  <div className="field"><label>入金予定日</label>
+                    <input type="date" value={form.payment_due ?? ""} onChange={(e) => set("payment_due", e.target.value)} /></div>
+                  <div className="field"><label>入金日</label>
+                    <input type="date" value={form.paid_on ?? ""} onChange={(e) => set("paid_on", e.target.value)} /></div>
+                  <div className="field"><label>入金ステータス</label>
+                    <select value={form.payment_status}
+                      onChange={(e) => set("payment_status", e.target.value as PaymentStatus)}>
+                      {PAYMENT_STATUS_OPTIONS.map((s) => (
+                        <option key={s} value={s}>{PAYMENT_STATUS_LABELS[s]}</option>
+                      ))}
+                    </select></div>
+                  <div className="field"><label>請求金額</label>
+                    <MoneyInputN value={form.invoice_amount} onChange={(n) => set("invoice_amount", n)}
+                      placeholder="未設定=請求額を使用" /></div>
+                  <div className="field"><label>入金済金額</label>
+                    <MoneyInput value={form.paid_amount} onChange={(n) => set("paid_amount", n)} /></div>
+                </div>
+              </>
+            )}
           </>
         )}
 
