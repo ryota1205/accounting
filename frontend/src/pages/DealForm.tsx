@@ -8,7 +8,7 @@ import { previewTax, previewBilling } from "../lib/calc";
 import { yen, pct } from "../lib/format";
 import {
   PAYMENT_STATUS_LABELS, PAYMENT_STATUS_OPTIONS, PROJECT_STATUS_OPTIONS,
-  CUSTOMER_TYPES, CONFIDENCE_RANKS,
+  CUSTOMER_TYPES,
 } from "../lib/deal";
 
 const EMPTY: DealInput = {
@@ -81,7 +81,6 @@ export default function DealForm() {
   const [clients, setClients] = useState<Master[]>([]);
   const [instructors, setInstructors] = useState<Master[]>([]);
   const [agencies, setAgencies] = useState<Master[]>([]);
-  const [rates, setRates] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(editing);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -92,9 +91,6 @@ export default function DealForm() {
     api.listMasters("clients").then(setClients).catch(() => {});
     api.listMasters("instructors").then(setInstructors).catch(() => {});
     api.listMasters("agencies").then(setAgencies).catch(() => {});
-    api.listConfidenceRates()
-      .then((rs) => setRates(Object.fromEntries(rs.map((r) => [r.rank, r.rate]))))
-      .catch(() => {});
     if (editing) {
       api.getDeal(Number(id)).then((d) => {
         setForm({
@@ -128,8 +124,6 @@ export default function DealForm() {
   const opProfit = gross - (form.allocated_fixed_cost ?? 0);
   // 見込み売上の未入力(0)補完は新規登録時のみ（編集保存で既存データを書き換えない）
   const effectiveExpected = editing ? form.expected_sales_amount : (form.expected_sales_amount || form.fee);
-  const weighted = Math.round(effectiveExpected *
-    (form.confidence_rank ? rates[form.confidence_rank] ?? 0 : 0));
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -207,7 +201,7 @@ export default function DealForm() {
           </span>
           {!showDetails && (
             <span style={{ color: "var(--muted)", fontSize: 12 }}>
-              代理店／受注確度・見込み売上／交通費・原価／備考{editing ? "／入金情報" : ""}
+              代理店／見込み売上／交通費・原価／備考{editing ? "／入金情報" : ""}
             </span>
           )}
         </button>
@@ -236,16 +230,8 @@ export default function DealForm() {
               </div>
             </div>
 
-            <h3 style={{ marginTop: 18 }}>受注確度</h3>
+            <h3 style={{ marginTop: 18 }}>金額（詳細）</h3>
             <div className="form-grid">
-              <div className="field"><label>受注確度</label>
-                <select value={form.confidence_rank ?? ""}
-                  onChange={(e) => set("confidence_rank", (e.target.value || null))}>
-                  <option value="">（未設定）</option>
-                  {CONFIDENCE_RANKS.map((r) => (
-                    <option key={r} value={r}>{r}（{Math.round((rates[r] ?? 0) * 100)}%）</option>
-                  ))}
-                </select></div>
               <div className="field"><label>見込み売上</label>
                 <MoneyInput value={form.expected_sales_amount} onChange={(n) => set("expected_sales_amount", n)} />
                 {!editing && <span className="hint">未入力なら研修費用と同額で保存します</span>}</div>
@@ -253,10 +239,6 @@ export default function DealForm() {
                 <div className="field"><label>失注理由</label>
                   <input value={form.lost_reason ?? ""} onChange={(e) => set("lost_reason", e.target.value)} /></div>
               )}
-            </div>
-
-            <h3 style={{ marginTop: 18 }}>金額（詳細）</h3>
-            <div className="form-grid">
               <div className="field"><label>交通費</label>
                 <MoneyInput value={form.transport} onChange={(n) => set("transport", n)} /></div>
               <div className="field"><label>その他</label>
@@ -307,7 +289,6 @@ export default function DealForm() {
           <div className="card"><div className="label">粗利額</div><div className="value">{yen(gross)}</div></div>
           <div className="card"><div className="label">粗利率</div><div className="value">{pct(grossRate)}</div></div>
           <div className="card"><div className="label">営業利益見込み</div><div className="value">{yen(opProfit)}</div></div>
-          <div className="card"><div className="label">確度加重後見込み</div><div className="value">{yen(weighted)}</div></div>
         </div>
 
         <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
