@@ -202,23 +202,14 @@ export default function DealForm() {
                 <MoneyInput value={form.fee} onChange={(n) => set("fee", n)} /></div>
               <div className="field"><label>講師料</label>
                 <MoneyInput value={form.instructor_fee} onChange={(n) => set("instructor_fee", n)} /></div>
-              <div className="field"><label>見込み売上</label>
-                <MoneyInput value={form.expected_sales_amount} onChange={(n) => set("expected_sales_amount", n)} />
-                {!editing && <span className="hint">未入力なら研修費用と同額で保存します</span>}</div>
               {form.project_status === "失注" && (
                 <div className="field"><label>失注理由</label>
                   <input value={form.lost_reason ?? ""} onChange={(e) => set("lost_reason", e.target.value)} /></div>
               )}
               <div className="field"><label>交通費</label>
                 <MoneyInput value={form.transport} onChange={(n) => set("transport", n)} /></div>
-              <div className="field"><label>その他</label>
+              <div className="field"><label>その他・経費</label>
                 <MoneyInput value={form.other} onChange={(n) => set("other", n)} /></div>
-              <div className="field"><label>直接原価</label>
-                <MoneyInputN value={form.direct_cost} onChange={(n) => set("direct_cost", n)}
-                  placeholder="未設定=講師料を使用" />
-                <span className="hint">未入力なら講師料を原価として使用</span></div>
-              <div className="field"><label>備考</label>
-                <input value={form.note ?? ""} onChange={(e) => set("note", e.target.value)} /></div>
             </div>
 
             {editing && (
