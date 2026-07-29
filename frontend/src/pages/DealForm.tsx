@@ -194,11 +194,23 @@ export default function DealForm() {
             </select></div>
         </div>
 
-        <div style={{ marginTop: 14 }}>
-          <button type="button" className="btn sub sm" onClick={() => setShowDetails((v) => !v)}>
-            {showDetails ? "詳細を閉じる ▴" : "詳細を入力 ▾"}
-          </button>
-        </div>
+        <button type="button" onClick={() => setShowDetails((v) => !v)}
+          style={{
+            marginTop: 14, width: "100%", padding: "10px 14px", cursor: "pointer",
+            background: showDetails ? "#fff" : "#f8fafc", color: "var(--text)",
+            border: "1px dashed var(--border)", borderRadius: 8,
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            gap: 10, flexWrap: "wrap", textAlign: "left", fontSize: 13,
+          }}>
+          <span style={{ fontWeight: 600 }}>
+            {showDetails ? "▲ 詳細項目を閉じる" : "▼ 詳細項目も入力する（任意）"}
+          </span>
+          {!showDetails && (
+            <span style={{ color: "var(--muted)", fontSize: 12 }}>
+              代理店／受注確度・見込み売上／交通費・原価／備考{editing ? "／入金情報" : ""}
+            </span>
+          )}
+        </button>
 
         {showDetails && (
           <>
