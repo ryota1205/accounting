@@ -121,7 +121,6 @@ export default function DealForm() {
   const cost = form.direct_cost ?? form.instructor_fee;
   const gross = sales - cost;
   const grossRate = sales ? gross / sales : 0;
-  const opProfit = gross - (form.allocated_fixed_cost ?? 0);
   // 見込み売上の未入力(0)補完は新規登録時のみ（編集保存で既存データを書き換えない）
   const effectiveExpected = editing ? form.expected_sales_amount : (form.expected_sales_amount || form.fee);
 
@@ -249,8 +248,6 @@ export default function DealForm() {
                 <MoneyInputN value={form.direct_cost} onChange={(n) => set("direct_cost", n)}
                   placeholder="未設定=講師料を使用" />
                 <span className="hint">未入力なら講師料を原価として使用</span></div>
-              <div className="field"><label>固定費配賦額</label>
-                <MoneyInput value={form.allocated_fixed_cost} onChange={(n) => set("allocated_fixed_cost", n)} /></div>
               <div className="field"><label>備考</label>
                 <input value={form.note ?? ""} onChange={(e) => set("note", e.target.value)} /></div>
             </div>
@@ -290,7 +287,6 @@ export default function DealForm() {
           <div className="card"><div className="label">売上金額(税抜)</div><div className="value">{yen(sales)}</div></div>
           <div className="card"><div className="label">粗利額</div><div className="value">{yen(gross)}</div></div>
           <div className="card"><div className="label">粗利率</div><div className="value">{pct(grossRate)}</div></div>
-          <div className="card"><div className="label">営業利益見込み</div><div className="value">{yen(opProfit)}</div></div>
         </div>
 
         <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
