@@ -31,11 +31,11 @@ def monthly(fiscal_year: int, session: Session = Depends(get_session)):
     cur = _deals_in_fy(session, fiscal_year)
     prev = _deals_in_fy(session, fiscal_year - 1)
     cur_buckets = calc.monthly_buckets(
-        fiscal_year, [(d.revenue_month.year, d.revenue_month.month, d.billing) for d in cur]
+        fiscal_year, [(d.revenue_month.year, d.revenue_month.month, _net(d)) for d in cur]
     )
     has_prev = len(prev) > 0
     prev_buckets = calc.monthly_buckets(
-        fiscal_year - 1, [(d.revenue_month.year, d.revenue_month.month, d.billing) for d in prev]
+        fiscal_year - 1, [(d.revenue_month.year, d.revenue_month.month, _net(d)) for d in prev]
     )
     prev_series = prev_buckets if has_prev else [None] * 12
     return {
@@ -53,7 +53,7 @@ def annual(fiscal_year: int, session: Session = Depends(get_session)):
     rows = []
     month_totals = [0] * 12
     for c in clients:
-        items = [(d.revenue_month.year, d.revenue_month.month, d.billing)
+        items = [(d.revenue_month.year, d.revenue_month.month, _net(d))
                  for d in deals if d.client == c]
         buckets = calc.monthly_buckets(fiscal_year, items)
         for i in range(12):
@@ -69,7 +69,7 @@ def annual(fiscal_year: int, session: Session = Depends(get_session)):
     prev_has_data = len(prev) > 0
     prev_month_totals = calc.monthly_buckets(
         fiscal_year - 1,
-        [(d.revenue_month.year, d.revenue_month.month, d.billing) for d in prev],
+        [(d.revenue_month.year, d.revenue_month.month, _net(d)) for d in prev],
     )
     return {
         "labels": MONTH_LABELS,
@@ -98,7 +98,7 @@ def by_dimension(
     for d in deals:
         key = getattr(d, dim) or "(未設定)"
         bucket = totals.setdefault(key, {"name": key, "amount": 0, "instructor_fee": 0})
-        bucket["amount"] += d.billing
+        bucket["amount"] += _net(d)
         bucket["instructor_fee"] += d.instructor_fee
     grand = sum(b["amount"] for b in totals.values())
     result = []

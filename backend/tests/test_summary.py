@@ -39,16 +39,16 @@ def _post(tc, **over):
     return tc.post("/api/deals", json=base)
 
 
-def test_summary_monthly_returns_12_billing_buckets(client):
+def test_summary_monthly_returns_12_net_buckets(client):
     _post(client, held_on="2026-04-10", client="A社", fee=400000)
     _post(client, held_on="2026-05-10", client="B社", fee=200000)
     res = client.get("/api/summary/monthly", params={"fiscal_year": 2026})
     assert res.status_code == 200
     body = res.json()
     assert body["labels"][0] == "4月"
-    assert body["current"][0] == 440000
-    assert body["current"][1] == 220000
-    assert body["total"] == 660000
+    assert body["current"][0] == 400000
+    assert body["current"][1] == 200000
+    assert body["total"] == 600000
     assert all(v is None for v in body["prev"])
 
 
@@ -59,11 +59,11 @@ def test_summary_annual_matrix_by_client(client):
     res = client.get("/api/summary/annual", params={"fiscal_year": 2026})
     body = res.json()
     a_row = next(r for r in body["rows"] if r["client"] == "A社")
-    assert a_row["months"][0] == 440000
-    assert a_row["months"][4] == 440000
-    assert a_row["total"] == 880000
-    assert body["month_totals"][0] == 440000
-    assert body["grand_total"] == 1100000
+    assert a_row["months"][0] == 400000
+    assert a_row["months"][4] == 400000
+    assert a_row["total"] == 800000
+    assert body["month_totals"][0] == 400000
+    assert body["grand_total"] == 1000000
 
 
 def test_summary_by_instructor_share(client):
@@ -73,10 +73,10 @@ def test_summary_by_instructor_share(client):
                      "frm": "2026-04-01", "to": "2027-03-31"})
     body = res.json()
     total = sum(r["amount"] for r in body)
-    assert total == 1100000
+    assert total == 1000000
     takahashi = next(r for r in body if r["name"] == "高橋")
-    assert takahashi["amount"] == 440000
-    assert abs(takahashi["share"] - 440000 / 1100000) < 1e-9
+    assert takahashi["amount"] == 400000
+    assert abs(takahashi["share"] - 400000 / 1000000) < 1e-9
 
 
 def test_summary_pl_full(client):

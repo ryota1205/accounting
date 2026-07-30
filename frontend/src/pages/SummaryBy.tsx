@@ -78,7 +78,7 @@ export default function SummaryBy() {
             <thead>
               <tr>
                 {sortTh("name", DIMS.find((d) => d.key === dim)?.label ?? "")}
-                {sortTh("amount", "売上(税込)", true)}
+                {sortTh("amount", "売上(税抜)", true)}
                 {dim === "instructor" && sortTh("instructor_fee", "講師料", true)}
                 {sortTh("share", "シェア率", true)}
               </tr>

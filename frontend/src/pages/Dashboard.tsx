@@ -40,7 +40,7 @@ export default function Dashboard() {
     ["overdue", "long_overdue"].includes(paymentAlert(d, today)));
   const overdueTotal = overdueDeals.reduce((s, d) => s + unpaidAmount(d), 0);
 
-  // 前年同期比（年度開始4月〜「今月」までの累計・税込）。例: 6月なら 4〜6月を当年度/前年度で対比
+  // 前年同期比（年度開始4月〜「今月」までの累計・税抜）。例: 6月なら 4〜6月を当年度/前年度で対比
   const nowMonth = new Date().getMonth() + 1;          // 1-12（実際の今月）
   const elapsed = ((nowMonth - 4 + 12) % 12) + 1;       // 4月起点の経過月数（6月=3）
   const ytd = (arr: (number | null)[]) =>
@@ -66,7 +66,7 @@ export default function Dashboard() {
         </Link>
       )}
       <div className="cards">
-        <Card label={`${fiscalYear}年度 売上合計(税込)`} value={yen(monthly.total)} />
+        <Card label={`${fiscalYear}年度 売上合計(税抜)`} value={yen(monthly.total)} />
         <Card label="営業利益" value={yen(pl.operating_profit)} />
         <Card label="BEP達成率" value={pct(pl.bep_achievement)}
           sub={`損益分岐点 ${yen(pl.bep)}`} />
@@ -74,7 +74,7 @@ export default function Dashboard() {
       </div>
 
       <div className="panel">
-        <h3>前年同期比（{rangeLabel} 累計・税込）</h3>
+        <h3>前年同期比（{rangeLabel} 累計・税抜）</h3>
         {!hasPrevYtd && <div className="hint">※ 前年度（{fiscalYear - 1}年度）データがありません。</div>}
         <div className="cards">
           <div className="card">
