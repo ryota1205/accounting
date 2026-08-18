@@ -152,10 +152,7 @@ export default function Deals() {
         <button className="btn sub sm" onClick={load}>検索</button>
       </div>
       <div className="panel">
-        <div style={{ textAlign: "left", fontWeight: 700, fontSize: 26, marginBottom: 4 }}>{fiscalYear}年度</div>
-        <div style={{ marginBottom: 12, fontSize: 11.5, color: "var(--muted)", lineHeight: 1.5 }}>
-          売上の集計は「受注」以降（受注・実施済・請求済・入金済）のみ。問い合わせ・初回相談・提案中・失注は金額を入力しても合計に計上しません（薄い表示）。
-        </div>
+        <div style={{ textAlign: "left", fontWeight: 700, fontSize: 26, marginBottom: 12 }}>{fiscalYear}年度</div>
         {error ? <ErrorState message={error} />
           : rows === null ? <Loading />
           : display.length === 0 ? <Empty />
