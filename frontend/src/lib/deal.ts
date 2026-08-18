@@ -17,6 +17,15 @@ export const PROJECT_STATUS_OPTIONS = [
   "問い合わせ", "初回相談", "提案中", "受注", "実施済", "請求済", "入金済", "失注",
 ];
 
+/** 売上として計上するステータス（受注以降）。
+ *  問い合わせ・初回相談・提案中・失注は金額を入力しても合計に含めない。 */
+export const SALES_COUNTED_STATUSES = ["受注", "実施済", "請求済", "入金済"];
+
+/** この案件を売上・請求の合計に計上するか。 */
+export function isSalesCounted(d: Deal): boolean {
+  return SALES_COUNTED_STATUSES.includes(d.project_status);
+}
+
 export const CUSTOMER_TYPES = ["新規", "既存", "リピート"] as const;
 export const CONFIDENCE_RANKS = ["A", "B", "C"] as const;
 
@@ -51,9 +60,9 @@ export function weightedForecast(d: Deal, rates: Record<string, number>): number
 export function invoiceAmount(d: Deal): number {
   return d.invoice_amount ?? d.billing;
 }
-/** 未入金額 = 請求金額 - 入金済金額（入金済は0） */
+/** 未入金額 = 請求金額 - 入金済金額（入金済・受注前/失注は0） */
 export function unpaidAmount(d: Deal): number {
-  if (d.payment_status === "paid") return 0;
+  if (d.payment_status === "paid" || !isSalesCounted(d)) return 0;
   return Math.max(0, invoiceAmount(d) - (d.paid_amount ?? 0));
 }
 

@@ -9,7 +9,7 @@ import { yen, pct } from "../lib/format";
 import {
   PAYMENT_STATUS_LABELS, PROJECT_STATUS_OPTIONS, ALERT_LABELS, AlertKind,
   salesAmount, grossProfit, grossMarginRate, invoiceAmount, unpaidAmount,
-  paymentDelayDays, paymentAlert,
+  paymentDelayDays, paymentAlert, isSalesCounted,
 } from "../lib/deal";
 
 type Ctx = { today: Date };
@@ -21,20 +21,30 @@ type Col = {
 
 const mmdd = (s: string | null) => (s ? s.slice(5) : "—");
 
+// 受注前（問い合わせ/初回相談/提案中）と失注は金額を入力しても合計に計上しないため、
+// 金額を薄く表示して「集計対象外」であることを分かるようにする
+const amt = (d: Deal, v: number, text?: string) => {
+  const label = text ?? yen(v);
+  if (isSalesCounted(d)) return label;
+  return (
+    <span className="uncounted" title="受注前・失注の案件は売上合計に計上されません">{label}</span>
+  );
+};
+
 const COLS: Col[] = [
   { key: "held_on", label: "実施予定", align: "center", render: (d) => mmdd(d.held_on), sort: (d) => d.held_on },
   { key: "client", label: "顧客名", render: (d) => d.client, sort: (d) => d.client },
   { key: "training_theme", label: "研修テーマ", render: (d) => d.training_theme ?? d.training_name ?? "—", sort: (d) => d.training_theme ?? "" },
-  { key: "sales", label: "売上(税抜)", align: "num", render: (d) => yen(salesAmount(d)), sort: (d) => salesAmount(d) },
-  { key: "gross", label: "粗利", align: "num", render: (d) => yen(grossProfit(d)), sort: (d) => grossProfit(d) },
-  { key: "grossRate", label: "粗利率", align: "num", render: (d) => pct(grossMarginRate(d)), sort: (d) => grossMarginRate(d) },
+  { key: "sales", label: "売上(税抜)", align: "num", render: (d) => amt(d, salesAmount(d)), sort: (d) => salesAmount(d) },
+  { key: "gross", label: "粗利", align: "num", render: (d) => amt(d, grossProfit(d)), sort: (d) => grossProfit(d) },
+  { key: "grossRate", label: "粗利率", align: "num", render: (d) => amt(d, 0, pct(grossMarginRate(d))), sort: (d) => grossMarginRate(d) },
   { key: "project_status", label: "案件状況", align: "center", render: (d) => d.project_status, sort: (d) => d.project_status },
   {
     key: "payment_status", label: "入金状況", align: "center",
     render: (d) => <span className={`badge pay ${d.payment_status}`}>{PAYMENT_STATUS_LABELS[d.payment_status]}</span>,
     sort: (d) => d.payment_status,
   },
-  { key: "invoice", label: "請求金額", align: "num", render: (d) => yen(invoiceAmount(d)), sort: (d) => invoiceAmount(d) },
+  { key: "invoice", label: "請求金額", align: "num", render: (d) => amt(d, invoiceAmount(d)), sort: (d) => invoiceAmount(d) },
   { key: "paid", label: "入金済", align: "num", render: (d) => yen(d.paid_amount), sort: (d) => d.paid_amount },
   { key: "unpaid", label: "未入金", align: "num", render: (d) => yen(unpaidAmount(d)), sort: (d) => unpaidAmount(d) },
   { key: "payment_due", label: "入金予定", align: "center", render: (d) => mmdd(d.payment_due), sort: (d) => d.payment_due ?? "" },
@@ -142,7 +152,10 @@ export default function Deals() {
         <button className="btn sub sm" onClick={load}>検索</button>
       </div>
       <div className="panel">
-        <div style={{ textAlign: "left", fontWeight: 700, fontSize: 26, marginBottom: 12 }}>{fiscalYear}年度</div>
+        <div style={{ textAlign: "left", fontWeight: 700, fontSize: 26, marginBottom: 4 }}>{fiscalYear}年度</div>
+        <div style={{ marginBottom: 12, fontSize: 11.5, color: "var(--muted)", lineHeight: 1.5 }}>
+          売上の集計は「受注」以降（受注・実施済・請求済・入金済）のみ。問い合わせ・初回相談・提案中・失注は金額を入力しても合計に計上しません（薄い表示）。
+        </div>
         {error ? <ErrorState message={error} />
           : rows === null ? <Loading />
           : display.length === 0 ? <Empty />

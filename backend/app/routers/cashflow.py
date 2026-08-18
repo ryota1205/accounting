@@ -8,7 +8,7 @@ from app.schemas import PaymentItemIn, PaymentItemUpdate, SchedulePutIn
 from app.auth import require_admin
 from app import calc
 from app.routers.summary import (
-    _deals_in_fy, _month_fixed_cost, _cost, MONTH_LABELS,
+    _deals_in_fy, _month_fixed_cost, _cost, _counted, MONTH_LABELS,
 )
 
 router = APIRouter(prefix="/api/cashflow", tags=["cashflow"],
@@ -112,7 +112,9 @@ def cashflow(fiscal_year: int, basis: str = "billing",
         undated_inflow = undated
     else:
         inflow = calc.monthly_buckets(
-            fiscal_year, [(d.revenue_month.year, d.revenue_month.month, d.billing) for d in deals]
+            fiscal_year,
+            [(d.revenue_month.year, d.revenue_month.month, d.billing)
+             for d in deals if _counted(d)],
         )
         undated_inflow = 0
 

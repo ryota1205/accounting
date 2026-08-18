@@ -106,3 +106,50 @@ def test_summary_pl_full(client):
     assert b["top_clients"][0]["name"] in ("A社", "B社")
     assert b["top_clients"][0]["amount"] == 10000000
     assert len(b["top_clients"]) <= 5
+
+
+# ===== 受注前ステータスは売上合計に含めない =====
+PRE_ORDER_STATUSES = ["問い合わせ", "初回相談", "提案中", "失注"]
+
+
+def test_monthly_excludes_pre_order_statuses(client):
+    _post(client, held_on="2026-04-10", client="受注A", fee=400000,
+          project_status="受注")
+    for i, st in enumerate(PRE_ORDER_STATUSES):
+        _post(client, held_on="2026-04-10", client=f"見込{i}", fee=900000,
+              project_status=st)
+    body = client.get("/api/summary/monthly", params={"fiscal_year": 2026}).json()
+    assert body["current"][0] == 400000
+    assert body["total"] == 400000
+
+
+def test_annual_and_by_dimension_exclude_pre_order_statuses(client):
+    _post(client, held_on="2026-04-10", client="受注A", instructor="高橋",
+          fee=400000, project_status="実施済")
+    _post(client, held_on="2026-04-10", client="提案B", instructor="窪田",
+          fee=900000, project_status="提案中")
+    annual = client.get("/api/summary/annual", params={"fiscal_year": 2026}).json()
+    assert [r["client"] for r in annual["rows"]] == ["受注A"]
+    assert annual["grand_total"] == 400000
+
+    by = client.get("/api/summary/by", params={"dim": "instructor",
+                    "frm": "2026-04-01", "to": "2027-03-31"}).json()
+    assert [r["name"] for r in by] == ["高橋"]
+    assert by[0]["amount"] == 400000
+
+
+def test_pl_and_month_metrics_exclude_pre_order_statuses(client):
+    _post(client, held_on="2026-04-10", client="受注A", fee=1000000,
+          direct_cost=300000, project_status="受注")
+    _post(client, held_on="2026-04-10", client="提案B", fee=5000000,
+          direct_cost=1000000, project_status="提案中")
+    pl = client.get("/api/summary/pl", params={"fiscal_year": 2026}).json()
+    assert pl["net_sales"] == 1000000
+    assert pl["variable"] == 300000
+    assert [c["name"] for c in pl["top_clients"]] == ["受注A"]
+
+    cur = client.get("/api/summary/month", params={"ym": "2026-04"}).json()["current"]
+    assert cur["sales"] == 1000000
+    assert cur["gross_profit"] == 700000
+    assert cur["order_count"] == 1
+    assert cur["deal_count"] == 2  # 件数は全ステータスを数える

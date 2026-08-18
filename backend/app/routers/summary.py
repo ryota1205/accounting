@@ -28,8 +28,8 @@ def _deals_in_fy(session: Session, fiscal_year: int):
 
 @router.get("/monthly")
 def monthly(fiscal_year: int, session: Session = Depends(get_session)):
-    cur = _deals_in_fy(session, fiscal_year)
-    prev = _deals_in_fy(session, fiscal_year - 1)
+    cur = [d for d in _deals_in_fy(session, fiscal_year) if _counted(d)]
+    prev = [d for d in _deals_in_fy(session, fiscal_year - 1) if _counted(d)]
     cur_buckets = calc.monthly_buckets(
         fiscal_year, [(d.revenue_month.year, d.revenue_month.month, _net(d)) for d in cur]
     )
@@ -48,7 +48,7 @@ def monthly(fiscal_year: int, session: Session = Depends(get_session)):
 
 @router.get("/annual")
 def annual(fiscal_year: int, session: Session = Depends(get_session)):
-    deals = _deals_in_fy(session, fiscal_year)
+    deals = [d for d in _deals_in_fy(session, fiscal_year) if _counted(d)]
     clients = sorted({d.client for d in deals})
     rows = []
     month_totals = [0] * 12
@@ -65,7 +65,7 @@ def annual(fiscal_year: int, session: Session = Depends(get_session)):
                    for (y, m) in calc.fiscal_months(fiscal_year)]
 
     # 前年同年度の月計（前年対比の差額表示用）
-    prev = _deals_in_fy(session, fiscal_year - 1)
+    prev = [d for d in _deals_in_fy(session, fiscal_year - 1) if _counted(d)]
     prev_has_data = len(prev) > 0
     prev_month_totals = calc.monthly_buckets(
         fiscal_year - 1,
@@ -96,6 +96,8 @@ def by_dimension(
     ).all()
     totals: dict[str, dict] = {}
     for d in deals:
+        if not _counted(d):
+            continue
         key = getattr(d, dim) or "(未設定)"
         bucket = totals.setdefault(key, {"name": key, "amount": 0, "instructor_fee": 0})
         bucket["amount"] += _net(d)
@@ -108,12 +110,22 @@ def by_dimension(
     return result
 
 
+def _counted(d: Deal) -> bool:
+    """売上として計上する案件か。受注以降のみ計上し、
+    問い合わせ・初回相談・提案中・失注は金額を入力していても集計に含めない。"""
+    return d.project_status in ORDER_STATUSES
+
+
 def _net(d: Deal) -> int:
+    if not _counted(d):
+        return 0
     return d.fee + d.transport + d.other
 
 
 def _cost(d: Deal) -> int:
     """直接原価。未設定なら従来の講師料を用いる（既存BEPと後方互換）。"""
+    if not _counted(d):
+        return 0
     return d.direct_cost if d.direct_cost is not None else d.instructor_fee
 
 
@@ -149,6 +161,8 @@ def profit_loss(fiscal_year: int, session: Session = Depends(get_session)):
 
     by_client: dict[str, int] = {}
     for d in deals:
+        if not _counted(d):
+            continue
         by_client[d.client] = by_client.get(d.client, 0) + _net(d)
     top_clients = [
         {"name": name, "amount": amount,
@@ -170,6 +184,8 @@ def profit_loss(fiscal_year: int, session: Session = Depends(get_session)):
 
 # ===== 月次サマリー =====
 def _invoice_amount(d: Deal) -> int:
+    if not _counted(d):
+        return 0
     return d.invoice_amount if d.invoice_amount is not None else d.billing
 
 
@@ -238,6 +254,8 @@ def _month_metrics(session: Session, year: int, month: int, rates: dict) -> dict
 def _group_metrics(deals, key_fn) -> list[dict]:
     agg: dict[str, dict] = {}
     for d in deals:
+        if not _counted(d):
+            continue
         key = key_fn(d) or "(未設定)"
         b = agg.setdefault(key, {"name": key, "sales": 0, "gross": 0, "count": 0})
         b["sales"] += _net(d)
@@ -262,6 +280,8 @@ def analysis(fiscal_year: int, session: Session = Depends(get_session)):
     total_sales = sum(_net(d) for d in deals)
     ctype: dict[str, int] = {}
     for d in deals:
+        if not _counted(d):
+            continue
         ctype[d.customer_type or "(未設定)"] = ctype.get(d.customer_type or "(未設定)", 0) + _net(d)
     by_customer_type = [
         {"type": t, "sales": s, "share": (s / total_sales) if total_sales else 0.0}

@@ -308,3 +308,6 @@ td.num, th.num { text-align: right; }
   /* 年間表などの固定高さドロワーは画面に収める */
   .flush { max-height: calc(100vh - 210px); }
 }
+
+/* 集計対象外の金額（受注前・失注の案件） */
+.uncounted { color: var(--muted); opacity: .6; }
